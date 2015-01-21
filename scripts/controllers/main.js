@@ -1,0 +1,1 @@
+../../app/scripts/controllers/main.js

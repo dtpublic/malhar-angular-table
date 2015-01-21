@@ -16,6 +16,7 @@
 * limitations under the License.
 */
 angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
+  'datatorrent.mlhrTable.templates',
   'datatorrent.mlhrTable.services.mlhrTableSortFunctions',
   'datatorrent.mlhrTable.services.mlhrTableFilterFunctions',
   'datatorrent.mlhrTable.services.mlhrTableFormatFunctions'
