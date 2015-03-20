@@ -692,9 +692,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
       // scope.rows
       var visible_rows;
       // | tableRowFilter:columns:searchTerms:filterState 
-      visible_rows = tableRowFilter(scope.rows, scope.columns, scope.searchTerms, scope.filterState);
+      visible_rows = tableRowFilter(scope.rows, scope.columns, scope.searchTerms, scope.filterState, scope.options);
       // | tableRowSorter:columns:sortOrder:sortDirection 
-      visible_rows = tableRowSorter(visible_rows, scope.columns, scope.sortOrder, scope.sortDirection);
+      visible_rows = tableRowSorter(visible_rows, scope.columns, scope.sortOrder, scope.sortDirection, scope.options);
       // | limitTo:rowOffset - filterState.filterCount 
       visible_rows = limitTo(visible_rows, Math.floor(scope.rowOffset) - scope.filterState.filterCount);
       // | limitTo:rowLimit
@@ -794,7 +794,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowFilter', ['datatorrent
   'mlhrTableFilterFunctions',
   '$log',
   function (tableFilterFunctions, $log) {
-    return function tableRowFilter(rows, columns, searchTerms, filterState) {
+    return function tableRowFilter(rows, columns, searchTerms, filterState, options) {
       var enabledFilterColumns, result = rows;
       // gather enabled filter functions
       enabledFilterColumns = columns.filter(function (column) {
@@ -826,7 +826,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowFilter', ['datatorrent
             var col = enabledFilterColumns[i];
             var filter = col.filter;
             var term = searchTerms[col.id];
-            var value = row[col.key];
+            var value = {}.hasOwnProperty.call(options, 'getter') && typeof options.getter === 'function' ? options.getter(col.key, row) : row[col.key];
             var computedValue = typeof col.format === 'function' ? col.format(value, row) : value;
             if (!filter(term, value, computedValue, row)) {
               return false;
@@ -869,7 +869,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowSorter', []).filter('m
       }
     }
   }
-  return function tableRowSorter(rows, columns, sortOrder, sortDirection) {
+  return function tableRowSorter(rows, columns, sortOrder, sortDirection, options) {
     if (!sortOrder.length) {
       return rows;
     }
@@ -884,7 +884,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowSorter', []).filter('m
         var dir = sortDirection[id];
         if (column && column.sort) {
           var fn = column.sort;
-          var result = dir === '+' ? fn(a, b) : fn(b, a);
+          var result = dir === '+' ? fn(a, b, options) : fn(b, a, options);
           if (result !== 0) {
             return result;
           }
@@ -1112,16 +1112,32 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFormatFunctions', []).se
 angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions', []).service('mlhrTableSortFunctions', function () {
   return {
     number: function (field) {
-      return function (row1, row2) {
-        return row1[field] * 1 - row2[field] * 1;
+      return function (row1, row2, options) {
+        var val1, val2;
+        if ({}.hasOwnProperty.call(options, 'getter') && typeof options.getter === 'function') {
+          val1 = options.getter(field, row1);
+          val2 = options.getter(field, row2);
+        } else {
+          val1 = row1[field];
+          val2 = row2[field];
+        }
+        return val1 * 1 - val2 * 1;
       };
     },
     string: function (field) {
-      return function (row1, row2) {
-        if (row1[field].toString().toLowerCase() === row2[field].toString().toLowerCase()) {
+      return function (row1, row2, options) {
+        var val1, val2;
+        if ({}.hasOwnProperty.call(options, 'getter') && typeof options.getter === 'function') {
+          val1 = options.getter(field, row1);
+          val2 = options.getter(field, row2);
+        } else {
+          val1 = row1[field];
+          val2 = row2[field];
+        }
+        if (val1.toString().toLowerCase() === val2.toString().toLowerCase()) {
           return 0;
         }
-        return row1[field].toString().toLowerCase() > row2[field].toString().toLowerCase() ? 1 : -1;
+        return val1.toString().toLowerCase() > val2.toString().toLowerCase() ? 1 : -1;
       };
     }
   };
