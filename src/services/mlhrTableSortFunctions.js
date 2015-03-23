@@ -22,7 +22,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions',[])
     number: function(field){
       return function(row1,row2,options) {
         var val1, val2;
-        if ({}.hasOwnProperty.call(options, 'getter') && typeof(options.getter) === 'function') {
+        if ({}.hasOwnProperty.call(options, 'getter')) {
           val1 = options.getter(field, row1);
           val2 = options.getter(field, row2);
         }
@@ -36,7 +36,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions',[])
     string: function(field){
       return function(row1,row2,options) {
         var val1, val2;
-        if ({}.hasOwnProperty.call(options, 'getter') && typeof(options.getter) === 'function') {
+        if ({}.hasOwnProperty.call(options, 'getter')) {
           val1 = options.getter(field, row1);
           val2 = options.getter(field, row2);
         }

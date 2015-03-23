@@ -60,7 +60,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowFilter',[
           var col = enabledFilterColumns[i];
           var filter = col.filter;
           var term = searchTerms[col.id];
-          var value = ({}.hasOwnProperty.call(options, 'getter') && typeof(options.getter) === 'function')? options.getter(col.key, row):row[col.key];
+          var value = ({}.hasOwnProperty.call(options, 'getter'))? options.getter(col.key, row):row[col.key];
           var computedValue = typeof col.format === 'function' ? col.format(value, row) : value;
           if (!filter(term, value, computedValue, row)) {
             return false;
