@@ -173,7 +173,7 @@ describe('Directive: mlhrTable', function () {
     // isoScope.options.getter = function() {
     //   return 'valueFromGetter';
     // };
-    if ({}.hasOwnProperty.call(isoScope.options, 'getter')) {
+    if (isoScope.options !== undefined && {}.hasOwnProperty.call(isoScope.options, 'getter')) {
       expect(isoScope.options.getter).to.be.an('function');
     }
   });

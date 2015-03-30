@@ -435,7 +435,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       } else {
         throw new Error('"columns" array not found in mlhrTable scope!');
       }
-      if ({}.hasOwnProperty.call(scope.options, 'getter')) {
+      if (scope.options !== undefined && {}.hasOwnProperty.call(scope.options, 'getter')) {
         if (typeof scope.options.getter !== 'function') {
           throw new Error('"getter" in "options" should be a function!');
         }
@@ -618,7 +618,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableCell', ['datatorrent.m
         cellMarkup = '{{ row[column.key] | ' + column.ngFilter + ':row }}';
       } else if (column.format) {
         cellMarkup = '{{ column.format(row[column.key], row, column) }}';
-      } else if ({}.hasOwnProperty.call(scope.options, 'getter')) {
+      } else if (scope.options !== undefined && {}.hasOwnProperty.call(scope.options, 'getter')) {
         cellMarkup = '{{ options.getter(column.key, row) }}';
       } else {
         cellMarkup = '{{ row[column.key] }}';
@@ -831,7 +831,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowFilter', ['datatorrent
             var col = enabledFilterColumns[i];
             var filter = col.filter;
             var term = searchTerms[col.id];
-            var value = {}.hasOwnProperty.call(options, 'getter') ? options.getter(col.key, row) : row[col.key];
+            var value = options !== undefined && {}.hasOwnProperty.call(options, 'getter') ? options.getter(col.key, row) : row[col.key];
             var computedValue = typeof col.format === 'function' ? col.format(value, row) : value;
             if (!filter(term, value, computedValue, row)) {
               return false;
@@ -1119,7 +1119,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions', []).serv
     number: function (field) {
       return function (row1, row2, options) {
         var val1, val2;
-        if ({}.hasOwnProperty.call(options, 'getter')) {
+        if (options !== undefined && {}.hasOwnProperty.call(options, 'getter')) {
           val1 = options.getter(field, row1);
           val2 = options.getter(field, row2);
         } else {
@@ -1132,7 +1132,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions', []).serv
     string: function (field) {
       return function (row1, row2, options) {
         var val1, val2;
-        if ({}.hasOwnProperty.call(options, 'getter')) {
+        if (options !== undefined && {}.hasOwnProperty.call(options, 'getter')) {
           val1 = options.getter(field, row1);
           val2 = options.getter(field, row2);
         } else {
