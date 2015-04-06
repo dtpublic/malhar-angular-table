@@ -1,10 +1,10 @@
 <div class="mlhr-table-wrapper">
   <table ng-class="classes" class="mlhr-table mlhr-header-table">
     <thead>
-      <tr ui-sortable="sortableOptions" ng-model="columns">
+      <tr ui-sortable="sortableOptions" ng-model="_columns">
         <th 
           scope="col" 
-          ng-repeat="column in columns" 
+          ng-repeat="column in _columns" 
           ng-click="toggleSort($event,column)" 
           ng-class="{'sortable-column' : column.sort, 'select-column': column.selector}" 
           ng-attr-title="{{ column.title || '' }}"
@@ -30,7 +30,7 @@
         </th>
       </tr>
       <tr ng-if="hasFilterFields()" class="mlhr-table-filter-row">
-        <td ng-repeat="column in columns" ng-class="'column-' + column.id">
+        <td ng-repeat="column in _columns" ng-class="'column-' + column.id">
           <input 
             type="text"
             ng-if="(column.filter)"
@@ -59,14 +59,14 @@
       <thead>
         <th 
             scope="col"
-            ng-repeat="column in columns" 
+            ng-repeat="column in _columns" 
             ng-style="{ width: column.width, 'min-width': column.width, 'max-width': column.width }"
           ></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-if="visible_rows.length === 0">
-          <td ng-attr-colspan="{{columns.length}}" class="space-holder-row-cell">
+          <td ng-attr-colspan="{{_columns.length}}" class="space-holder-row-cell">
             <div ng-if="options.loading && options.loadingTemplateUrl" ng-include="options.loadingTemplateUrl"></div>
             <div ng-if="options.loading && !options.loadingTemplateUrl">{{ options.loadingText }}</div>
             <div ng-if="!options.loading && options.noRowsTemplateUrl" ng-include="options.noRowsTemplateUrl"></div>
@@ -74,9 +74,9 @@
           </td>
         </tr>
       </tbody>
-      <tbody mlhr-table-dummy-rows="rowOffset" columns="columns" cell-content="..."></tbody>
+      <tbody mlhr-table-dummy-rows="rowOffset" columns="_columns" cell-content="..."></tbody>
       <tbody mlhr-table-rows class="mlhr-table-rendered-rows"></tbody>
-      <tbody mlhr-table-dummy-rows="filterState.filterCount - rowOffset - visible_rows.length" columns="columns" cell-content="..."></tbody>
+      <tbody mlhr-table-dummy-rows="filterState.filterCount - rowOffset - visible_rows.length" columns="_columns" cell-content="..."></tbody>
     </table>
   </div>
 </div>
