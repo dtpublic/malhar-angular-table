@@ -254,6 +254,8 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
           $log.warn('Failed loading table data: ' + reason);
         }
       );
+    } else { //scope.options.loadingPromise is optional, not required. So, when it's not specified, scope.options.loading should be set to false. Otherwise, spinner wheel will hang there forever where there is no rows.
+      scope.api.setLoading(false);
     }
 
   }
