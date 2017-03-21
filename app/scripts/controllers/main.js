@@ -93,6 +93,13 @@ angular.module('datatorrent.mlhrTable.ghPage')
     var dataDfd = $q.defer();
     $scope.my_table_options = {
       rowLimit: 10,
+      highlightRow: function(row) {
+        if (row.weight > 200 || row.weight < 100) {
+          return true;
+        } else {
+          return false;
+        }
+      },
       storage: localStorage,
       storageKey: 'gh-page-table',
       storageHash: 'a9s8df9a8s7df98as7df',

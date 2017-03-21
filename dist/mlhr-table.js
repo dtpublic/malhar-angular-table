@@ -747,7 +747,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
       scope.$watch('sortOrder', updateHandler, true);
       scope.$watch('sortDirection', updateHandler, true);
-      scope.$watch('rows', updateHandler, true);
+      scope.$watch('rows', function () {
+        if (scope.options.highlightRow) {
+          for (var i = 0; i < scope.rows.length; i++) {
+            if (scope.options.highlightRow(scope.rows[i])) {
+              scope.rows[i].highlight = true;
+            }
+          }
+        }
+        updateHandler();
+      }, true);
     }
     return {
       restrict: 'A',
@@ -1190,6 +1199,6 @@ angular.module('src/templates/mlhrTableDummyRows.tpl.html', []).run([
 angular.module('src/templates/mlhrTableRows.tpl.html', []).run([
   '$templateCache',
   function ($templateCache) {
-    $templateCache.put('src/templates/mlhrTableRows.tpl.html', '<tr ng-repeat="row in visible_rows" ng-attr-class="{{ (rowOffset + $index) % 2 ? \'odd\' : \'even\' }}">\n' + '  <td ng-repeat="column in columns track by column.id" class="mlhr-table-cell" mlhr-table-cell></td>\n' + '</tr>');
+    $templateCache.put('src/templates/mlhrTableRows.tpl.html', '<tr ng-repeat="row in visible_rows" \n' + '  ng-class="{highlight: row.highlight}"\n' + '  ng-attr-class="{{ (rowOffset + $index) % 2 ? \'odd\' : \'even\' }}">\n' + '\n' + '  <td ng-repeat="column in columns track by column.id" class="mlhr-table-cell" mlhr-table-cell>\n' + '  </td>\n' + '\n' + '</tr>\n' + '');
   }
 ]);

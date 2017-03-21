@@ -58,7 +58,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
       scope.$watch('sortOrder', updateHandler, true);
       scope.$watch('sortDirection', updateHandler, true);
-      scope.$watch('rows', updateHandler, true);
+      scope.$watch('rows', function(){
+        if (scope.options.highlightRow) {
+          for (var i = 0; i < scope.rows.length; i++) {
+            if (scope.options.highlightRow(scope.rows[i])) {
+              scope.rows[i].highlight = true;
+            }
+          }
+        }
+        updateHandler();
+      }, true);
     }
 
   return {
