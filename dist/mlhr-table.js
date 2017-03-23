@@ -1101,12 +1101,140 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
   }
   date.placeholder = 'date search';
   date.title = 'Search by date. Enter a date string (RFC2822 or ISO 8601 date). You can also type "today", "yesterday", "> 2 days ago", "< 1 day 2 hours ago", etc.';
+  function stringToDuration(str) {
+    function getVal(str) {
+      var units = {
+          y: 31536000000,
+          ye: 31536000000,
+          yea: 31536000000,
+          year: 31536000000,
+          years: 31536000000,
+          mo: 2592000000,
+          mon: 2592000000,
+          mont: 2592000000,
+          month: 2592000000,
+          months: 2592000000,
+          w: 604800000,
+          we: 604800000,
+          wee: 604800000,
+          week: 604800000,
+          weeks: 604800000,
+          d: 86400000,
+          da: 86400000,
+          day: 86400000,
+          days: 86400000,
+          h: 3600000,
+          ho: 3600000,
+          hou: 3600000,
+          hour: 3600000,
+          hours: 3600000,
+          mi: 60000,
+          min: 60000,
+          minu: 60000,
+          minut: 60000,
+          minute: 60000,
+          minutes: 60000,
+          '': 1000,
+          s: 1000,
+          se: 1000,
+          sec: 1000,
+          seco: 1000,
+          secon: 1000,
+          second: 1000,
+          seconds: 1000
+        };
+      // ary[2] should be the number (allowing decimal)
+      // ary[4] should be the unit
+      var ary = str.match(/^( *)(\d+\.?\d*|\d*\.?\d+)( *)(y|ye|yea|year|years|mo|mon|mont|month|months|w|we|wee|week|weeks|d|da|day|days|h|ho|hou|hour|hours|mi|min|minu|minut|minute|minutes|s|se|sec|seco|secon|second|seconds| *)( *$)/i);
+      if (ary) {
+        // the expression was a number and one of the units above
+        return ary[2] * units[ary[4]];
+      }
+      // got here means the expression could be in the hh:mm:ss format
+      // ary[2] should be the hours
+      // ary[3] should be the minutes
+      // ary[4] should be the seconds (if exist)
+      ary = str.match(/(^ *)(\d\d)(:\d\d)(:\d\d)?( *$)/);
+      if (ary && ary[4]) {
+        return ary[2] * units.hours + ary[3].substr(1) * units.minutes + ary[4].substr(1) * units.seconds;
+      } else if (ary) {
+        return ary[2] * units.hours + ary[3].substr(1) * units.minutes;
+      }
+      // got here means the expression is not recognized
+      return NaN;
+    }
+    // end getVal function
+    var val = 0;
+    if (str) {
+      var ary = str.split(',');
+      for (var i = 0; i < ary.length; i++) {
+        val += getVal(ary[i]);
+      }
+    }
+    return val;
+  }
+  function duration(term, value) {
+    if (!value) {
+      // filter is considered false if row value is blank
+      return false;
+    }
+    // default filter to true to show the row
+    var filterState = true;
+    // break expressions into groups delimited by ampersand (&)
+    var termArray = term.split('&');
+    var ary, operator, exp, filterValue, rowValue;
+    // loop through each expression and perform the comparison
+    // we'll exit the loop if the filterState becomes false
+    // false means one of the expressions does not yield a
+    // true condition
+    for (var i = 0; i < termArray.length && filterState; i++) {
+      // parse operands and expression
+      // ary[2] should be the operator
+      // ary[4] should be the expression
+      ary = termArray[i].match(/^( *)(<=|>=|>|<|=| *)( *)(.*)/);
+      if (ary) {
+        operator = ary[2] || '=';
+        // default to equal sign if user doesn't enter an operator
+        exp = ary[4];
+        if (exp && !isNaN(filterValue = stringToDuration(exp))) {
+          if (!rowValue) {
+            // only convert row string to value once
+            rowValue = stringToDuration(value);
+          }
+          // now compare the row value with the expression entered by the user
+          if (operator === '<=') {
+            filterState = rowValue <= filterValue;
+          } else if (operator === '>=') {
+            filterState = rowValue >= filterValue;
+          } else if (operator === '>') {
+            filterState = rowValue > filterValue;
+          } else if (operator === '<') {
+            filterState = rowValue < filterValue;
+          } else if (operator === '=') {
+            filterState = rowValue === filterValue;
+          }
+        } else {
+          // expression is invalid, return false to hide row
+          return false;
+        }
+      }
+    }
+    return filterState;
+  }
+  function durationFormatted(term, value) {
+    return duration(term, value);
+  }
+  duration.placeholder = 'duration search';
+  duration.title = 'Search by duration, e.g.:\n"<= 30 minutes",\n"= 1 hour",\n">= 1 day, 4 hours" or\n "> 2.5 days & < 3 days".\nDefault operator is "=" and unit is "second".\nThus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds".';
   return {
     like: like,
     likeFormatted: likeFormatted,
     number: number,
     numberFormatted: numberFormatted,
-    date: date
+    date: date,
+    duration: duration,
+    durationFormatted: durationFormatted,
+    stringToDuration: stringToDuration
   };
 });
 // Source: dist/services/mlhrTableFormatFunctions.js
@@ -1145,39 +1273,49 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFormatFunctions', []).se
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions', []).service('mlhrTableSortFunctions', function () {
-  return {
-    number: function (field) {
-      return function (row1, row2, options) {
-        var val1, val2;
-        if (options !== undefined && {}.hasOwnProperty.call(options, 'getter')) {
-          val1 = options.getter(field, row1);
-          val2 = options.getter(field, row2);
-        } else {
-          val1 = row1[field];
-          val2 = row2[field];
-        }
-        return val1 * 1 - val2 * 1;
-      };
-    },
-    string: function (field) {
-      return function (row1, row2, options) {
-        var val1, val2;
-        if (options !== undefined && {}.hasOwnProperty.call(options, 'getter')) {
-          val1 = options.getter(field, row1);
-          val2 = options.getter(field, row2);
-        } else {
-          val1 = row1[field];
-          val2 = row2[field];
-        }
-        if (val1.toString().toLowerCase() === val2.toString().toLowerCase()) {
-          return 0;
-        }
-        return val1.toString().toLowerCase() > val2.toString().toLowerCase() ? 1 : -1;
-      };
-    }
-  };
-});
+angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions', []).service('mlhrTableSortFunctions', [
+  'mlhrTableFilterFunctions',
+  function (mlhrTableFilterFunctions) {
+    return {
+      number: function (field) {
+        return function (row1, row2, options) {
+          var val1, val2;
+          if (options !== undefined && {}.hasOwnProperty.call(options, 'getter')) {
+            val1 = options.getter(field, row1);
+            val2 = options.getter(field, row2);
+          } else {
+            val1 = row1[field];
+            val2 = row2[field];
+          }
+          return val1 * 1 - val2 * 1;
+        };
+      },
+      string: function (field) {
+        return function (row1, row2, options) {
+          var val1, val2;
+          if (options !== undefined && {}.hasOwnProperty.call(options, 'getter')) {
+            val1 = options.getter(field, row1);
+            val2 = options.getter(field, row2);
+          } else {
+            val1 = row1[field];
+            val2 = row2[field];
+          }
+          if (val1.toString().toLowerCase() === val2.toString().toLowerCase()) {
+            return 0;
+          }
+          return val1.toString().toLowerCase() > val2.toString().toLowerCase() ? 1 : -1;
+        };
+      },
+      duration: function (field) {
+        return function (row1, row2, options) {
+          var val1 = mlhrTableFilterFunctions.stringToDuration(row1[field]);
+          var val2 = mlhrTableFilterFunctions.stringToDuration(row2[field]);
+          return val1 > val2 ? 1 : -1;
+        };
+      }
+    };
+  }
+]);
 // Source: dist/templates.js
 angular.module('datatorrent.mlhrTable.templates', [
   'src/templates/mlhrTable.tpl.html',
