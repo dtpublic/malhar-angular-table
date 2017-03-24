@@ -95,13 +95,13 @@ angular.module('datatorrent.mlhrTable.ghPage')
 
     // Generates a row with random data
     function genRow(id){
+
       var fnames = ['joe','fred','frank','jim','mike','gary','aziz'];
       var lnames = ['sterling','smith','erickson','burke','ansari'];
       var seed = Math.random();
       var seed2 = Math.random();
       var first_name = fnames[ Math.round( seed * (fnames.length -1) ) ];
       var last_name = lnames[ Math.round( seed * (lnames.length -1) ) ];
-      var duration = durationToString(Math.random() * 100000000 * (id + 1));
       
       return {
         id: id,
@@ -112,7 +112,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
         height: Math.round( seed2 * 36 ) + 48,
         weight: Math.round( seed2 * 130 ) + 90,
         likes: Math.round(seed2 * seed * 1000000),
-        duration: duration
+        duration: durationToString(Math.random() * 100000000 * (id + 1))
       };
     }
 
@@ -145,11 +145,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
     $scope.my_table_options = {
       rowLimit: 10,
       highlightRow: function(row) {
-        if (row.weight > 200 || row.weight < 100) {
-          return true;
-        } else {
-          return false;
-        }
+        return (row.weight > 200 || row.weight < 100);
       },
       storage: localStorage,
       storageKey: 'gh-page-table',
