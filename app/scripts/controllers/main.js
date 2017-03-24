@@ -95,7 +95,6 @@ angular.module('datatorrent.mlhrTable.ghPage')
 
     // Generates a row with random data
     function genRow(id){
-
       var fnames = ['joe','fred','frank','jim','mike','gary','aziz'];
       var lnames = ['sterling','smith','erickson','burke','ansari'];
       var seed = Math.random();
