@@ -1,3 +1,8 @@
-<tr ng-repeat="row in visible_rows" ng-attr-class="{{ (rowOffset + $index) % 2 ? 'odd' : 'even' }}">
-  <td ng-repeat="column in columns track by column.id" class="mlhr-table-cell" mlhr-table-cell></td>
+<tr ng-repeat="row in visible_rows" 
+  ng-class="{highlight: row.highlight}"
+  ng-attr-class="{{ (rowOffset + $index) % 2 ? 'odd' : 'even' }}">
+
+  <td ng-repeat="column in columns track by column.id" class="mlhr-table-cell" mlhr-table-cell>
+  </td>
+
 </tr>

@@ -82,7 +82,7 @@ The options object should be available on the parent scope of the `<mlhr-table>`
 | fixedHeight        | `boolean` | false       | If true, the table body will always have a height of `bodyHeight`, regardless of whether the rows fill up the vertical space.        |
 | onRegisterApi      | `function` | {}         | Provides a access to select table controller methods, including selectAll, deselectAll, isSelectedAll, setLoading, etc.              | 
 | getter             | `function` | {}         | Customize the way to get column value. If not specified, get columen value by row[column.key]                                        | 
-
+| highlightRow       | `function` | undefined      | Determines whether to highlight a table row or not.   |
 
 ### Loading
 A common requirement for tables showing dynamically loaded data is to show loading feedback. There are several options pertaining to this: `loading`, `loadingText`, and `loadingTemplateUrl`.  To disable loading text, a promise object from data loading can be provided, so that `setLoading(false)` can be attached to `promise.then()`.  Optionally, `onRegisterApi` function can be specified, which provides direct access to `setLoading` and other table controller methods.  This function specifies a single argument, which is the api object provided by the table.  Example: `onRegisterApi: function(api) { $scope.tableAPI = api; }`.
