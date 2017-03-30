@@ -82,7 +82,7 @@ The options object should be available on the parent scope of the `<mlhr-table>`
 | fixedHeight        | `boolean` | false       | If true, the table body will always have a height of `bodyHeight`, regardless of whether the rows fill up the vertical space.        |
 | onRegisterApi      | `function` | {}         | Provides a access to select table controller methods, including selectAll, deselectAll, isSelectedAll, setLoading, etc.              | 
 | getter             | `function` | {}         | Customize the way to get column value. If not specified, get columen value by row[column.key]                                        | 
-| highlightRow       | `function` | undefined      | Determines whether to highlight a table row or not.   |
+| highlightRow       | `function` | undefined      | Determines whether or not to highlight a table row.   |
 
 ### Loading
 A common requirement for tables showing dynamically loaded data is to show loading feedback. There are several options pertaining to this: `loading`, `loadingText`, and `loadingTemplateUrl`.  To disable loading text, a promise object from data loading can be provided, so that `setLoading(false)` can be attached to `promise.then()`.  Optionally, `onRegisterApi` function can be specified, which provides direct access to `setLoading` and other table controller methods.  This function specifies a single argument, which is the api object provided by the table.  Example: `onRegisterApi: function(api) { $scope.tableAPI = api; }`.
@@ -178,6 +178,8 @@ There are several common filter functions that are built-in. Use them by passing
 | date | Search by date. Enter a date string (RFC2822 or ISO 8601 date). You can also type "today", "yesterday", "> 2 days ago", "< 1 day 2 hours ago", etc. |
 | duration | Search by duration, e.g. "<= 30 minutes", "= 1 hour", ">= 1 day, 4 hours" or "> 2.5 days & < 3 days". Default operator is "=" and unit is "second". Thus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds". |
 | durationFormatted | Same as duration. |
+| memory | Search by memory using expressions, e.g. "> 512mb", "= 1.5GB", or ">= 128GB & <= 256GB". Units are not case sensitive. Default operator is "=" and unit is "MB". Thus searching "128", "= 128" or "128 MB" are equivalent to "= 128 MB". |
+| memoryFormatted | Same as memory. |
 
 Cell Formatting
 ---------------

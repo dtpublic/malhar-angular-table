@@ -56,6 +56,13 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions',[])
         var val2 = mlhrTableFilterFunctions.stringToDuration(row2[field]);
         return val1 > val2 ? 1 : -1;
       };
+    },
+    memory: function(field) {
+      return function(row1, row2, options) {
+        var val1 = mlhrTableFilterFunctions.stringToMemory(row1[field]);
+        var val2 = mlhrTableFilterFunctions.stringToMemory(row2[field]);
+        return val1 > val2 ? 1 : -1;
+      };
     }
   };
 });

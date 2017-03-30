@@ -67,6 +67,26 @@ angular.module('datatorrent.mlhrTable.ghPage')
       return result.join(', ');
     }
 
+    function memoryToString(memory) {
+      var unitsMap = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'BB'];
+      var q;
+      var r;
+
+      for(var i = unitsMap.length - 1; i > 0; i--) {
+        q = Math.floor(memory / Math.pow(1024, i));
+        if (q > 0) {
+          r = Math.ceil((memory - q * Math.pow(1024, i)) / Math.pow(1024, i) * 10) / 10;
+          q += r;
+          break;
+        }
+      }
+      if (i === 0) {
+       return memory + ' ' + unitsMap[i];
+     } else {
+       return q + ' ' + unitsMap[i];
+      }
+    }
+
     // Format functions, used with the "format" option in column definitions below
     // converts number in inches to display string, eg. 69 => 5'9"
     function inches2feet(inches, model){
@@ -111,7 +131,8 @@ angular.module('datatorrent.mlhrTable.ghPage')
         height: Math.round( seed2 * 36 ) + 48,
         weight: Math.round( seed2 * 130 ) + 90,
         likes: Math.round(seed2 * seed * 1000000),
-        duration: durationToString(Math.random() * 100000000 * (id + 1))
+        duration: durationToString(Math.random() * 100000000 * (id + 1)),
+        memory: memoryToString(Math.round(seed2 * seed * 10000000))
       };
     }
 
@@ -129,7 +150,8 @@ angular.module('datatorrent.mlhrTable.ghPage')
       { id: 'likes', key: 'likes', label: 'likes', ngFilter: 'commaGroups' },
       { id: 'height', key: 'height', label: 'Height', format: inches2feet, filter: feet_filter, sort: 'number' },
       { id: 'weight', key: 'weight', label: 'Weight', filter: 'number', sort: 'number' },
-      { id: 'duration', key: 'duration', label: 'Duration', filter: 'duration', sort: 'duration' }
+      { id: 'duration', key: 'duration', label: 'Duration', filter: 'duration', sort: 'duration' },
+      { id: 'memory', key: 'memory', label: 'Memory', filter: 'memory', sort: 'memory' }
     ];
 
     // Table data
