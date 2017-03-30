@@ -176,8 +176,6 @@ There are several common filter functions that are built-in. Use them by passing
 | number | Search by number, e.g. "123". Optionally use comparator expressions like ">=10" or "<1000". Use "~" for approx. int values, eg. "~3" will match "3.2". |
 | numberFormatted | Same as number, but looks at formatted cell value instead of raw |
 | date | Search by date. Enter a date string (RFC2822 or ISO 8601 date). You can also type "today", "yesterday", "> 2 days ago", "< 1 day 2 hours ago", etc. |
-| duration | Search by duration, e.g. "<= 30 minutes", "= 1 hour", ">= 1 day, 4 hours" or "> 2.5 days & < 3 days". Default operator is "=" and unit is "second". Thus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds". |
-| durationFormatted | Same as duration. |
 
 Cell Formatting
 ---------------

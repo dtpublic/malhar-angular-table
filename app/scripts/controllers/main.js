@@ -18,55 +18,6 @@ angular.module('datatorrent.mlhrTable.ghPage')
   })
   .controller('MainCtrl', function ($scope, $templateCache, $q) {
 
-    function durationToString(duration) {
-      var unitsMap = [
-        {
-          text: 'year',
-          val: 31536000000
-        },
-        {
-          text: 'month',
-          val: 2592000000
-        },
-        {
-          text: 'week',
-          val: 604800000
-        },
-        {
-          text: 'day',
-          val: 86400000
-        },
-        {
-          text: 'hour',
-          val: 3600000
-        },
-        {
-          text: 'minute',
-          val: 60000
-        },
-        {
-          text: 'second',
-          val: 1000
-        }
-      ];
-
-      var result = [];
-
-      function getVal(num, idx) {
-        var val = Math.floor(num / unitsMap[idx].val);
-        var remain = num - val * unitsMap[idx].val;
-        if (val > 0) {
-          result.push(val + ' ' + unitsMap[idx].text + (val > 1 ? 's' : ''));
-        }
-        if (remain >= 1000 && result.length < 2) {
-          getVal(remain, idx + 1);
-        }
-      }
-
-      getVal(duration, 0);
-      return result.join(', ');
-    }
-
     // Format functions, used with the "format" option in column definitions below
     // converts number in inches to display string, eg. 69 => 5'9"
     function inches2feet(inches, model){
@@ -95,6 +46,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
 
     // Generates a row with random data
     function genRow(id){
+
       var fnames = ['joe','fred','frank','jim','mike','gary','aziz'];
       var lnames = ['sterling','smith','erickson','burke','ansari'];
       var seed = Math.random();
@@ -110,8 +62,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
         age: Math.ceil(seed * 75) + 15,
         height: Math.round( seed2 * 36 ) + 48,
         weight: Math.round( seed2 * 130 ) + 90,
-        likes: Math.round(seed2 * seed * 1000000),
-        duration: durationToString(Math.random() * 100000000 * (id + 1))
+        likes: Math.round(seed2 * seed * 1000000)
       };
     }
 
@@ -128,8 +79,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
       { id: 'age', key: 'age', label: 'Age', sort: 'number', filter: 'number' },
       { id: 'likes', key: 'likes', label: 'likes', ngFilter: 'commaGroups' },
       { id: 'height', key: 'height', label: 'Height', format: inches2feet, filter: feet_filter, sort: 'number' },
-      { id: 'weight', key: 'weight', label: 'Weight', filter: 'number', sort: 'number' },
-      { id: 'duration', key: 'duration', label: 'Duration', filter: 'duration', sort: 'duration' }
+      { id: 'weight', key: 'weight', label: 'Weight', filter: 'number', sort: 'number' }
     ];
 
     // Table data
@@ -144,11 +94,15 @@ angular.module('datatorrent.mlhrTable.ghPage')
     $scope.my_table_options = {
       rowLimit: 10,
       highlightRow: function(row) {
-        return (row.weight > 200 || row.weight < 100);
+        if (row.weight > 200 || row.weight < 100) {
+          return true;
+        } else {
+          return false;
+        }
       },
       storage: localStorage,
       storageKey: 'gh-page-table',
-      storageHash: 'a9s8df9a8s7df98as7dg',
+      storageHash: 'a9s8df9a8s7df98as7df',
       // getter: function(key, row) {
       //   return row[key];
       // },

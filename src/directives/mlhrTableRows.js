@@ -54,33 +54,20 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
         }
       };
 
-      var highlightRowHandler = function() {
-        if (scope.rows) {
-          if (scope.options.highlightRow) {
-            // there is a highlightRow function, execute it
-            for (var i = 0; i < scope.rows.length; i++) {
-              scope.rows[i].highlight = scope.options.highlightRow(scope.rows[i]);
-            }
-          } else {
-            // there isn't a highlightRow function, set property to false
-            for (var i = 0; i < scope.rows.length; i++) {
-              scope.rows[i].highlight = false;
-            }
-          }
-        }
-      };
-
       scope.$watch('searchTerms', updateHandler, true);
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
       scope.$watch('sortOrder', updateHandler, true);
       scope.$watch('sortDirection', updateHandler, true);
       scope.$watch('rows', function(){
-        highlightRowHandler();
+        if (scope.options.highlightRow) {
+          for (var i = 0; i < scope.rows.length; i++) {
+            if (scope.options.highlightRow(scope.rows[i])) {
+              scope.rows[i].highlight = true;
+            }
+          }
+        }
         updateHandler();
       }, true);
-      scope.$watch('options.highlightRow', function(newVal, oldVal) {
-        highlightRowHandler();
-      });
     }
 
   return {
