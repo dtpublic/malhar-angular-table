@@ -96,9 +96,9 @@ angular.module('datatorrent.mlhrTable.ghPage')
         }
       }
       if (i === 0) {
-       return memory + ' ' + unitsMap[i];
-     } else {
-       return q + ' ' + unitsMap[i];
+        return memory + ' ' + unitsMap[i];
+      } else {
+        return q + ' ' + unitsMap[i];
       }
     }
 
