@@ -17,7 +17,7 @@
 
 angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions',[])
 
-.service('mlhrTableSortFunctions', function() {
+.service('mlhrTableSortFunctions', function(mlhrTableFilterFunctions) {
   return {
     number: function(field){
       return function(row1,row2,options) {
@@ -48,6 +48,13 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions',[])
           return 0;
         }
         return val1.toString().toLowerCase() > val2.toString().toLowerCase() ? 1 : -1 ;
+      };
+    },
+    duration: function(field) {
+      return function(row1, row2, options) {
+        var val1 = mlhrTableFilterFunctions.stringToDuration(row1[field]);
+        var val2 = mlhrTableFilterFunctions.stringToDuration(row2[field]);
+        return val1 > val2 ? 1 : -1;
       };
     }
   };
