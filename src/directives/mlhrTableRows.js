@@ -54,6 +54,31 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
         }
       };
 
+      var updateSelection = function() {
+        if (scope.selected && scope.selected.length > 0) {
+          if (scope.options.__selectionColumn.selectObject) {
+            // selected array contains entire row of data
+            for(var i = 0; i < scope.selected.length; i++) {
+              if (scope.rows.indexOf(scope.selected[i]) === -1) {
+                scope.selected.splice(i, 1);
+                i--;
+              }
+            }
+          } else {
+            // selected array contains ids
+            var ids = scope.rows.map(function(item) {
+              return item[scope.options.__selectionColumn.key];
+            });
+            for(var i = 0; i < scope.selected.length; i++) {
+              if (ids.indexOf(scope.selected[i]) === -1) {
+                scope.selected.splice(i, 1);
+                i--;
+              }
+            }
+          }
+        }
+      };
+
       var highlightRowHandler = function() {
         if (scope.rows) {
           if (scope.options.highlightRow) {
@@ -76,6 +101,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
       scope.$watch('sortDirection', updateHandler, true);
       scope.$watch('rows', function(){
         highlightRowHandler();
+        updateSelection();
         updateHandler();
       }, true);
       scope.$watch('options.highlightRow', function(newVal, oldVal) {

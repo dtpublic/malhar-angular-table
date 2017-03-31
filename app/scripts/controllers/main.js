@@ -144,7 +144,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
     // Table column definition objects
     $scope.my_table_columns = [
       { id: 'selected', key: 'id', label: '', width: 30, lockWidth: true, selector: true },
-      //{ id: 'selected', key: 'id', label: '', width: 30, lockWidth: true, selector: true, selectObject: true },
+      // { id: 'selected', key: 'id', label: '', width: 30, lockWidth: true, selector: true, selectObject: true },
       { id: 'ID', key: 'id', label: 'ID', sort: 'number', filter: 'number' },
       { id: 'first_name', key: 'first_name', label: 'First Name', sort: 'string', filter: 'like', template: '<strong>{{row[column.key]}}</strong>' },
       { id: 'last_name', key: 'last_name', label: 'Last Name', sort: 'string', filter: 'like', templateUrl: 'path/to/example/template.html' },
@@ -172,7 +172,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
       },
       storage: localStorage,
       storageKey: 'gh-page-table',
-      storageHash: 'a9s8df9a8s7df98as7dj',
+      storageHash: 'a9s8df9a8s7df98as7dh',
       // getter: function(key, row) {
       //   return row[key];
       // },
@@ -180,11 +180,20 @@ angular.module('datatorrent.mlhrTable.ghPage')
       loadingPromise: dataDfd.promise
     };
 
+    $scope.my_table_data = genRows(1000);
+
+    $scope.autoRefresh = false;
+
     // kick off interval that updates the dataset
     setInterval(function() {
-      $scope.my_table_data = genRows(1000);
-      dataDfd.resolve();
-      $scope.$apply();
+      if ($scope.autoRefresh) {
+        $scope.my_table_data = genRows(1000);
+        dataDfd.resolve();
+        $scope.$apply();
+      }
     }, 1000);
 
+    $scope.removeHalf = function() {
+      $scope.my_table_data.length = Math.ceil($scope.my_table_data.length / 2);
+    };
   });
