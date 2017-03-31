@@ -75,6 +75,12 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   }
 
   function link(scope, element) {
+    // This tableId is used to cache the sort column function
+    // It's used in the mlhrTableSortFunctions filter
+    // If this value isn't set, user will see a bug when sorting
+    // two different columns which have the same id property value.
+    // This happens even if the columns are on different pages.
+    scope.options.tableId = scope.$id;
 
     // Prevent following user input objects from being modified by making deep copies of originals
     scope.columns = angular.copy(scope._columns);

@@ -19,13 +19,14 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowSorter', [])
 
 .filter('mlhrTableRowSorter', function() {
   var column_cache = {};
-  function getColumn(columns,id) {
+  function getColumn(columns, id, tableId) {
+    var cacheId = tableId + '_' + id;
     if (column_cache.hasOwnProperty(id)) {
-      return column_cache[id];
+      return column_cache[cacheId];
     }
     for (var i = columns.length - 1; i >= 0; i--) {
       if (columns[i].id === id) {
-        column_cache[id] = columns[i];
+        column_cache[cacheId] = columns[i];
         return columns[i];
       }
     }
@@ -39,7 +40,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowSorter', [])
     return arrayCopy.sort(function(a,b) {
       for (var i = 0; i < sortOrder.length; i++) {
         var id = sortOrder[i];
-        var column = getColumn(columns,id);
+        var column = getColumn(columns, id, options.tableId);
         var dir = sortDirection[id];
         if (column && column.sort) {
           var fn = column.sort;
