@@ -2,12 +2,16 @@
 
 describe('Filter: tableRowSorter', function() {
 
-  var sandbox, sorter, columns, rows, numSort, numSort2, stringSort, sortOrder, sortDirection;
+  var sandbox, options, sorter, columns, rows, numSort, numSort2, stringSort, sortOrder, sortDirection;
 
   beforeEach(module('datatorrent.mlhrTable'));
 
   beforeEach(inject(function(mlhrTableRowSorterFilter) {
     sandbox = sinon.sandbox.create();
+
+    options = {
+      tableId: '1234'
+    };
 
     sorter = mlhrTableRowSorterFilter;
 
@@ -47,11 +51,10 @@ describe('Filter: tableRowSorter', function() {
   });
 
   it('should sort ascending by a column whose "sorting" field is "+"', function() {
-    
     sortOrder = ['key1'];
     sortDirection = {key1:'+'};
 
-    var result = sorter(rows,columns,sortOrder,sortDirection);
+    var result = sorter(rows, columns, sortOrder, sortDirection, options);
     var idxs = result.map(function(r){ return r.index; });
     expect(idxs).to.eql([2,1,3,0]);
 
@@ -62,7 +65,7 @@ describe('Filter: tableRowSorter', function() {
     sortOrder = ['key1'];
     sortDirection = {key1:'-'};
 
-    var result = sorter(rows,columns,sortOrder,sortDirection);
+    var result = sorter(rows, columns, sortOrder, sortDirection, options);
     var idxs = result.map(function(r){ return r.index; });
     expect(idxs).to.eql([0,1,3,2]);
 
@@ -72,7 +75,7 @@ describe('Filter: tableRowSorter', function() {
     sortOrder = ['not_a_column','key1'];
     sortDirection = {key1:'-'};
 
-    var result = sorter(rows,columns,sortOrder,sortDirection);
+    var result = sorter(rows, columns, sortOrder, sortDirection, options);
     var idxs = result.map(function(r){ return r.index; });
     expect(idxs).to.eql([0,1,3,2]);
   });
