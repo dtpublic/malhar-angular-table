@@ -16,40 +16,39 @@ angular.module('datatorrent.mlhrTable.ghPage')
     }
     return commaGroups;
   })
-  .controller('MainCtrl', function ($scope, $templateCache, $q) {
+  .filter('duration', function() {
+    var unitsMap = [
+      {
+        text: 'year',
+        val: 31536000000
+      },
+      {
+        text: 'month',
+        val: 2592000000
+      },
+      {
+        text: 'week',
+        val: 604800000
+      },
+      {
+        text: 'day',
+        val: 86400000
+      },
+      {
+        text: 'hour',
+        val: 3600000
+      },
+      {
+        text: 'minute',
+        val: 60000
+      },
+      {
+        text: 'second',
+        val: 1000
+      }
+    ];
 
-    function durationToString(duration) {
-      var unitsMap = [
-        {
-          text: 'year',
-          val: 31536000000
-        },
-        {
-          text: 'month',
-          val: 2592000000
-        },
-        {
-          text: 'week',
-          val: 604800000
-        },
-        {
-          text: 'day',
-          val: 86400000
-        },
-        {
-          text: 'hour',
-          val: 3600000
-        },
-        {
-          text: 'minute',
-          val: 60000
-        },
-        {
-          text: 'second',
-          val: 1000
-        }
-      ];
-
+    return function(duration) {
       var result = [];
 
       function getVal(num, idx) {
@@ -65,9 +64,10 @@ angular.module('datatorrent.mlhrTable.ghPage')
 
       getVal(duration, 0);
       return result.join(', ');
-    }
-
-    function memoryToString(memory) {
+    };
+  })
+  .filter('memory', function() {
+    return function(memory) {
       var unitsMap = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'BB'];
       var q;
       var r;
@@ -85,7 +85,9 @@ angular.module('datatorrent.mlhrTable.ghPage')
       } else {
         return q + ' ' + unitsMap[i];
       }
-    }
+    };
+  })
+  .controller('MainCtrl', function ($scope, $templateCache, $q) {
 
     // Format functions, used with the "format" option in column definitions below
     // converts number in inches to display string, eg. 69 => 5'9"
@@ -131,8 +133,8 @@ angular.module('datatorrent.mlhrTable.ghPage')
         height: Math.round( seed2 * 36 ) + 48,
         weight: Math.round( seed2 * 130 ) + 90,
         likes: Math.round(seed2 * seed * 1000000),
-        duration: durationToString(Math.random() * 100000000 * (id + 1)),
-        memory: memoryToString(Math.round(seed2 * seed * 10000000))
+        duration: Math.floor(Math.random() * 100000000 * (id + 1)),
+        memory: Math.floor(Math.round(seed2 * seed * 10000000))
       };
     }
 
@@ -150,8 +152,8 @@ angular.module('datatorrent.mlhrTable.ghPage')
       { id: 'likes', key: 'likes', label: 'likes', ngFilter: 'commaGroups' },
       { id: 'height', key: 'height', label: 'Height', format: inches2feet, filter: feet_filter, sort: 'number' },
       { id: 'weight', key: 'weight', label: 'Weight', filter: 'number', sort: 'number' },
-      { id: 'duration', key: 'duration', label: 'Duration', filter: 'duration', sort: 'duration' },
-      { id: 'memory', key: 'memory', label: 'Memory', filter: 'memory', sort: 'memory' }
+      { id: 'duration', key: 'duration', label: 'Duration', filter: 'duration', sort: 'number', template: '{{ row[column.key] | duration }}' },
+      { id: 'memory', key: 'memory', label: 'Memory', filter: 'memory', sort: 'number', template: '{{ row[column.key] | memory }}' }
     ];
 
     // Table data
@@ -170,7 +172,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
       },
       storage: localStorage,
       storageKey: 'gh-page-table',
-      storageHash: 'a9s8df9a8s7df98as7dg',
+      storageHash: 'a9s8df9a8s7df98as7dj',
       // getter: function(key, row) {
       //   return row[key];
       // },

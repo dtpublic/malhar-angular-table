@@ -165,8 +165,8 @@ angular.module('datatorrent.mlhrTable.ghPage')
       { id: 'likes', key: 'likes', label: 'likes', ngFilter: 'commaGroups' },
       { id: 'height', key: 'height', label: 'Height', format: inches2feet, filter: feet_filter, sort: 'number' },
       { id: 'weight', key: 'weight', label: 'Weight', filter: 'number', sort: 'number' },
-      { id: 'duration', key: 'duration', label: 'Duration', filter: 'duration', sort: 'duration' },
-      { id: 'memory', key: 'memory', label: 'Memory', filter: 'memory', sort: 'memory' }
+      { id: 'duration', key: 'duration', label: 'Duration', filter: 'durationFormatted', sort: 'durationFormatted' },
+      { id: 'memory', key: 'memory', label: 'Memory', filter: 'memoryFormatted', sort: 'memoryFormatted' }
     ];
 
     // Table data

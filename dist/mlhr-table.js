@@ -446,6 +446,13 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       return obj;
     }
     function link(scope, element) {
+      // This tableId is used to cache the sort column function
+      // It's used in the mlhrTableSortFunctions filter
+      // If this value isn't set, user will see a bug when sorting
+      // two different columns which have the same id property value.
+      // This happens even if the columns are on different pages.
+      scope.options = scope.options || {};
+      scope.options.tableId = scope.$id;
       // Prevent following user input objects from being modified by making deep copies of originals
       scope.columns = angular.copy(scope._columns);
       // Look for built-in filter, sort, and format functions
@@ -906,13 +913,14 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowFilter', ['datatorrent
 */
 angular.module('datatorrent.mlhrTable.filters.mlhrTableRowSorter', []).filter('mlhrTableRowSorter', function () {
   var column_cache = {};
-  function getColumn(columns, id) {
+  function getColumn(columns, id, tableId) {
+    var cacheId = tableId + '_' + id;
     if (column_cache.hasOwnProperty(id)) {
-      return column_cache[id];
+      return column_cache[cacheId];
     }
     for (var i = columns.length - 1; i >= 0; i--) {
       if (columns[i].id === id) {
-        column_cache[id] = columns[i];
+        column_cache[cacheId] = columns[i];
         return columns[i];
       }
     }
@@ -928,7 +936,7 @@ angular.module('datatorrent.mlhrTable.filters.mlhrTableRowSorter', []).filter('m
     return arrayCopy.sort(function (a, b) {
       for (var i = 0; i < sortOrder.length; i++) {
         var id = sortOrder[i];
-        var column = getColumn(columns, id);
+        var column = getColumn(columns, id, options.tableId);
         var dir = sortDirection[id];
         if (column && column.sort) {
           var fn = column.sort;
@@ -1166,7 +1174,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
       // ary[2] should be the hours
       // ary[3] should be the minutes
       // ary[4] should be the seconds (if exist)
-      ary = str.match(/(^ *)(\d\d)(:\d\d)(:\d\d)?( *$)/);
+      ary = str.match(/(^ *)(\d\d|\d)(:\d\d)(:\d\d)?( *$)/);
       if (ary && ary[4]) {
         return ary[2] * units.hours + ary[3].substr(1) * units.minutes + ary[4].substr(1) * units.seconds;
       } else if (ary) {
@@ -1186,15 +1194,15 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
     return val;
   }
   function duration(term, value) {
-    if (!value) {
-      // filter is considered false if row value is blank
+    if (typeof value !== 'number' || isNaN(value)) {
+      // we expect value to be a number and in milliseconds
       return false;
     }
     // default filter to true to show the row
     var filterState = true;
     // break expressions into groups delimited by ampersand (&)
     var termArray = term.split('&');
-    var ary, operator, exp, filterValue, rowValue;
+    var ary, operator, exp, filterValue;
     // loop through each expression and perform the comparison
     // we'll exit the loop if the filterState becomes false
     // false means one of the expressions does not yield a
@@ -1209,21 +1217,17 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
         // default to equal sign if user doesn't enter an operator
         exp = ary[4];
         if (exp && !isNaN(filterValue = stringToDuration(exp))) {
-          if (!rowValue) {
-            // only convert row string to value once
-            rowValue = stringToDuration(value);
-          }
           // now compare the row value with the expression entered by the user
           if (operator === '<=') {
-            filterState = rowValue <= filterValue;
+            filterState = value <= filterValue;
           } else if (operator === '>=') {
-            filterState = rowValue >= filterValue;
+            filterState = value >= filterValue;
           } else if (operator === '>') {
-            filterState = rowValue > filterValue;
+            filterState = value > filterValue;
           } else if (operator === '<') {
-            filterState = rowValue < filterValue;
+            filterState = value < filterValue;
           } else if (operator === '=') {
-            filterState = rowValue === filterValue;
+            filterState = value === filterValue;
           }
         } else {
           // expression is invalid, return false to hide row
@@ -1233,11 +1237,11 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
     }
     return filterState;
   }
-  function durationFormatted(term, value) {
-    return duration(term, value);
+  function durationFormatted(term, value, formatted) {
+    return duration(term, stringToDuration(formatted));
   }
-  duration.placeholder = 'duration search';
-  duration.title = 'Search by duration, e.g.:\n"<= 30 minutes",\n"= 1 hour",\n">= 1 day, 4 hours" or\n "> 2.5 days & < 3 days".\nDefault operator is "=" and unit is "second".\nThus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds".';
+  duration.placeholder = durationFormatted.placeholder = 'duration search';
+  duration.title = durationFormatted.title = 'Search by duration, e.g.:\n"<= 30 minutes",\n"= 1 hour",\n">= 1 day, 4 hours" or\n "> 2.5 days & < 3 days".\nDefault operator is "=" and unit is "second".\nThus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds".';
   function stringToMemory(str) {
     function getVal(str) {
       var units = {
@@ -1274,15 +1278,15 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
     return val;
   }
   function memory(term, value) {
-    if (!value) {
-      // filter is considered false if row value is blank
+    if (typeof value !== 'number' || isNaN(value)) {
+      // we expect value to be a number and in bytes
       return false;
     }
     // default filter to true to show the row
     var filterState = true;
     // break expressions into groups delimited by ampersand (&)
     var termArray = term.split('&');
-    var ary, operator, exp, filterValue, rowValue;
+    var ary, operator, exp, filterValue;
     // loop through each expression and perform the comparison
     // we'll exit the loop if the filterState becomes false
     // false means one of the expressions does not yield a
@@ -1297,21 +1301,17 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
         // default to equal sign if user doesn't enter an operator
         exp = ary[4];
         if (exp && !isNaN(filterValue = stringToMemory(exp))) {
-          if (!rowValue) {
-            // only convert row string to value once
-            rowValue = stringToMemory(value);
-          }
           // now compare the row value with the expression entered by the user
           if (operator === '<=') {
-            filterState = rowValue <= filterValue;
+            filterState = value <= filterValue;
           } else if (operator === '>=') {
-            filterState = rowValue >= filterValue;
+            filterState = value >= filterValue;
           } else if (operator === '>') {
-            filterState = rowValue > filterValue;
+            filterState = value > filterValue;
           } else if (operator === '<') {
-            filterState = rowValue < filterValue;
+            filterState = value < filterValue;
           } else if (operator === '=') {
-            filterState = rowValue === filterValue;
+            filterState = value === filterValue;
           }
         } else {
           // expression is invalid, return false to hide row
@@ -1321,11 +1321,11 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
     }
     return filterState;
   }
-  function memoryFormatted(term, value) {
-    return memory(term, value);
+  function memoryFormatted(term, value, formatted) {
+    return memory(term, stringToMemory(formatted));
   }
-  memory.placeholder = 'memory search';
-  memory.title = 'Search by memory using expressions, e.g.\n"> 512mb", "= 1.5GB", or\n">= 128GB & <= 256GB".\nUnits are not case sensitive.\nDefault operator is "=" and unit is "MB".\nThus searching "128", "= 128" or "128 MB" are equivalent to "= 128 MB".';
+  memory.placeholder = memoryFormatted.placeholder = 'memory search';
+  memory.title = memoryFormatted.title = 'Search by memory using expressions, e.g.\n"> 512mb", "= 1.5GB", or\n">= 128GB & <= 256GB".\nUnits are not case sensitive.\nDefault operator is "=" and unit is "MB".\nThus searching "128", "= 128" or "128 MB" are equivalent to "= 128 MB".';
   return {
     like: like,
     likeFormatted: likeFormatted,
@@ -1409,14 +1409,14 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableSortFunctions', []).serv
           return val1.toString().toLowerCase() > val2.toString().toLowerCase() ? 1 : -1;
         };
       },
-      duration: function (field) {
+      durationFormatted: function (field) {
         return function (row1, row2, options) {
           var val1 = mlhrTableFilterFunctions.stringToDuration(row1[field]);
           var val2 = mlhrTableFilterFunctions.stringToDuration(row2[field]);
           return val1 > val2 ? 1 : -1;
         };
       },
-      memory: function (field) {
+      memoryFormatted: function (field) {
         return function (row1, row2, options) {
           var val1 = mlhrTableFilterFunctions.stringToMemory(row1[field]);
           var val2 = mlhrTableFilterFunctions.stringToMemory(row2[field]);
