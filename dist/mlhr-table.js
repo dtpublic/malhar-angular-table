@@ -56,6 +56,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
         if (columns[i].selector) {
           selectorKey = columns[i].key;
           selectObject = columns[i].selectObject;
+          $scope.options.__selectionColumn = columns[i];
           break;
         }
       }
@@ -743,6 +744,30 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
           scope.visible_rows = calculateVisibleRows(scope);
         }
       };
+      var updateSelection = function () {
+        if (scope.selected && scope.selected.length > 0) {
+          if (scope.options.__selectionColumn.selectObject) {
+            // selected array contains entire row of data
+            for (var i = 0; i < scope.selected.length; i++) {
+              if (scope.rows.indexOf(scope.selected[i]) === -1) {
+                scope.selected.splice(i, 1);
+                i--;
+              }
+            }
+          } else {
+            // selected array contains ids
+            var ids = scope.rows.map(function (item) {
+                return item[scope.options.__selectionColumn.key];
+              });
+            for (var i = 0; i < scope.selected.length; i++) {
+              if (ids.indexOf(scope.selected[i]) === -1) {
+                scope.selected.splice(i, 1);
+                i--;
+              }
+            }
+          }
+        }
+      };
       var highlightRowHandler = function () {
         if (scope.rows) {
           if (scope.options.highlightRow) {
@@ -764,6 +789,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
       scope.$watch('sortDirection', updateHandler, true);
       scope.$watch('rows', function () {
         highlightRowHandler();
+        updateSelection();
         updateHandler();
       }, true);
       scope.$watch('options.highlightRow', function (newVal, oldVal) {
@@ -808,6 +834,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableSelector', []).directi
       var row = scope.row;
       var column = scope.column;
       element.on('click', function () {
+        scope.options.__selectionColumn = column;
         // Retrieve position in selected list
         var idx = selected.indexOf(column.selectObject ? row : row[column.key]);
         // it is selected, deselect it:

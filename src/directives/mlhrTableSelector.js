@@ -26,6 +26,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableSelector', [])
       var row = scope.row;
       var column = scope.column;
       element.on('click', function() {
+        scope.options.__selectionColumn = column;
 
         // Retrieve position in selected list
         var idx = selected.indexOf(column.selectObject ? row : row[column.key]);

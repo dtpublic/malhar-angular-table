@@ -51,6 +51,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       if (columns[i].selector) { 
         selectorKey = columns[i].key;
         selectObject = columns[i].selectObject;
+        $scope.options.__selectionColumn = columns[i];
         break;
       }
     }
