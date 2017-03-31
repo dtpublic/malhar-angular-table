@@ -191,7 +191,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
         dataDfd.resolve();
         $scope.$apply();
       }
-    }, 3000);
+    }, 1000);
 
     $scope.removeHalf = function() {
       $scope.my_table_data.length = Math.ceil($scope.my_table_data.length / 2);
