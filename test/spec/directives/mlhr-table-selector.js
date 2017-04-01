@@ -30,6 +30,8 @@ describe('Directive: mlhrTableSelector', function () {
     scope.row = row = { id: 1 };
     scope.column = column = { key: 'id' };
 
+    scope.options = {};
+
     // Define and compile the element
     element = angular.element('<div mlhr-table-selector></div>');
     element = compile(element)(scope);
