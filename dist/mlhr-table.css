@@ -60,8 +60,8 @@
 }
 
 .mlhr-table tr.highlight {
-  background-color: #5bc0de;
-  color: #ffffff;
+  background-color: #5bc0de !important;
+  color: #ffffff !important;
 }
 
 /* search input */
