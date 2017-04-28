@@ -28,19 +28,33 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
   var limitTo = $filter('limitTo');
 
   function calculateVisibleRows(scope) {
-    // scope.rows
+    // store visible rows in this variable
     var visible_rows;
-    
-    // | tableRowFilter:columns:searchTerms:filterState 
-    visible_rows = tableRowFilter(scope.rows, scope.columns, scope.searchTerms, scope.filterState, scope.options);
-    
-    // | tableRowSorter:columns:sortOrder:sortDirection 
-    visible_rows = tableRowSorter(visible_rows, scope.columns, scope.sortOrder, scope.sortDirection, scope.options);
 
-    // | limitTo:rowOffset - filterState.filterCount 
-    visible_rows = limitTo(visible_rows, Math.floor(scope.rowOffset) - scope.filterState.filterCount);
+    // build cache key using search terms and sorting options
+    var cacheKey = JSON.stringify({
+          searchTerms: scope.searchTerms,
+          sortOrder: scope.sortOrder,
+          sortDirection: scope.sortDirection
+        });
 
-    // | limitTo:rowLimit
+    // initialize cache if necessary
+    scope.filterState.cache = scope.filterState.cache || {};
+
+    // filter and sort if not in cache
+    if (!scope.filterState.cache[cacheKey]) {
+      scope.filterState.cache[cacheKey]= scope.filterState.cache[cacheKey] || tableRowFilter(scope.rows, scope.columns, scope.searchTerms, scope.filterState, scope.options);
+      scope.filterState.cache[cacheKey] = tableRowSorter(scope.filterState.cache[cacheKey], scope.columns, scope.sortOrder, scope.sortDirection, scope.options);
+    }
+
+    // update filter count
+    scope.filterState.filterCount = scope.filterState.cache[cacheKey].length;
+
+    // get visible rows from filter cache
+    visible_rows = limitTo(scope.filterState.cache[cacheKey], Math.floor(scope.rowOffset) - scope.filterState.filterCount);
+
+
+    // set upper limit if necessary
     visible_rows = limitTo(visible_rows, scope.rowLimit + Math.ceil(scope.rowOffset % 1));
 
     return visible_rows;
@@ -79,34 +93,29 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
         }
       };
 
-      var highlightRowHandler = function() {
-        if (scope.rows) {
-          if (scope.options.highlightRow) {
-            // there is a highlightRow function, execute it
-            for (var i = 0; i < scope.rows.length; i++) {
-              scope.rows[i].highlight = scope.options.highlightRow(scope.rows[i]);
-            }
-          } else {
-            // there isn't a highlightRow function, set property to false
-            for (var i = 0; i < scope.rows.length; i++) {
-              scope.rows[i].highlight = false;
-            }
-          }
-        }
+      scope.highlightRowHandler = function(row) {
+        return (scope.options.highlightRow ? scope.options.highlightRow(row) : false);
       };
 
-      scope.$watch('searchTerms', updateHandler, true);
+      scope.$watch('searchTerms', function() {
+        if (scope.scrollDiv.scrollTop() !== 0) {
+          // on filter change, scroll to top, let the scroll event update the view
+          scope.scrollDiv.scrollTop(0);
+        } else {
+          // no scroll change, run updateHandler
+          updateHandler();
+        }
+      }, true);
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
       scope.$watch('sortOrder', updateHandler, true);
       scope.$watch('sortDirection', updateHandler, true);
       scope.$watch('rows', function(){
-        highlightRowHandler();
+        // clear cache when data changes
+        scope.filterState.cache = {};
+
         updateSelection();
         updateHandler();
       }, true);
-      scope.$watch('options.highlightRow', function(newVal, oldVal) {
-        highlightRowHandler();
-      });
     }
 
   return {

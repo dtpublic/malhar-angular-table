@@ -109,8 +109,9 @@ angular.module('datatorrent.mlhrTable.ghPage')
     // Generates `num` random rows
     function genRows(num){
       var retVal = [];
+      var id = ($scope.my_table_data[0] ? $scope.my_table_data[0].id + 1 : 0);
       for (var i=0; i < num; i++) {
-        retVal.push(genRow(i));
+        retVal.push(genRow(id++));
       }
       return retVal;
     }
@@ -180,14 +181,21 @@ angular.module('datatorrent.mlhrTable.ghPage')
       loadingPromise: dataDfd.promise
     };
 
-    $scope.my_table_data = genRows(1000);
+    $scope.my_table_data = genRows(100);
 
     $scope.autoRefresh = false;
+    $scope.autoAppend = false;
 
     // kick off interval that updates the dataset
     setInterval(function() {
       if ($scope.autoRefresh) {
-        $scope.my_table_data = genRows(1000);
+        $scope.my_table_data.length = 0;
+        $scope.my_table_data.push.apply($scope.my_table_data, genRows(1000));
+        dataDfd.resolve();
+        $scope.$apply();
+      }
+      else if ($scope.autoAppend) {
+        $scope.my_table_data.push.apply($scope.my_table_data, genRows(1000));
         dataDfd.resolve();
         $scope.$apply();
       }

@@ -21,7 +21,7 @@
  * @restrict A
  * @description inserts dummy <tr>s for non-rendered rows
  * @element tbody
- * @example <tbody mlhr-table-dummy-rows="[number]" columns="[column array]"></tbody>
+ * @example <tbody mlhr-table-dummy-rows mlhr-table-dummy-rows-filtered-count="filteredState.filterCount" mlhr-table-dummy-rows-visible-count="visible_rows.length"  columns="[column array]"></tbody>
 **/
 angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', [])
 .directive('mlhrTableDummyRows', function() {
@@ -30,12 +30,23 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', [])
     template: '<tr class="mlhr-table-dummy-row" ng-style="{ height: dummyRowHeight + \'px\'}"><td ng-show="dummyRowHeight" ng-attr-colspan="{{columns.length}}"></td></tr>',
     scope: true,
     link: function(scope, element, attrs) {
-
-      scope.$watch(attrs.mlhrTableDummyRows, function(count) {
-        scope.dummyRowHeight = count * scope.rowHeight;
+      function updateHeight() {
+        if (scope.$parent.tableRows) {
+          scope.dummyRowHeight = (scope.$parent.filterState.filterCount - scope.$parent.visible_rows.length) * scope.rowHeight;
+          var rowHeight = scope.$parent.tableRows.height() / scope.$parent.visible_rows.length;
+          scope.$parent.tableRows.css('top', '-' + (scope.dummyRowHeight - rowHeight * scope.$parent.rowOffset) + 'px');
+        }
+      }
+      scope.$watch(attrs.mlhrTableDummyRowsFilteredCount, function(newVal, oldVal) {
+        if (newVal !== oldVal) {
+          updateHeight();
+        }
       });
-
+      scope.$watch(attrs.mlhrTableDummyRowsVisibleCount, function(newVal, oldVal) {
+        if (newVal !== oldVal) {
+          updateHeight();
+        }
+      });
     }
   };
-
 });
