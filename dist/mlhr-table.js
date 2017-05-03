@@ -544,7 +544,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       var scrollTopSaved = -1;
       // determine requestAnimationFrame compabitility
       var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (f) {
-          return setTimeout(f, 100);
+          return setTimeout(f, scope.options.scrollDebounce);
         };
       var loop = function (timeStamp) {
         if (scrollTopSaved !== scope.scrollDiv.scrollTop()) {

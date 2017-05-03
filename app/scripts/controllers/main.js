@@ -113,9 +113,9 @@ angular.module('datatorrent.mlhrTable.ghPage')
       if ($scope.my_table_data.length > 0) {
         id = $scope.my_table_data.map(function(row) {
                 return row.id;
-             }).sort(function(a, b) {
+              }).sort(function(a, b) {
                 return b - a;
-             })[0] + 1;
+              })[0] + 1;
       }
       for (var i=0; i < num; i++) {
         retVal.push(genRow(id++));
