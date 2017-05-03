@@ -194,7 +194,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
             || window.mozRequestAnimationFrame
             || window.webkitRequestAnimationFrame
             || window.msRequestAnimationFrame
-            || function(f) { return setTimeout(f, 100) };
+            || function(f) { return setTimeout(f, scope.options.scrollDebounce) };
 
     var loop = function(timeStamp) {
       if (scrollTopSaved !== scope.scrollDiv.scrollTop()) {
