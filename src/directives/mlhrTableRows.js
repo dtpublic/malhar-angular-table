@@ -109,12 +109,18 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
       scope.$watch('sortOrder', updateHandler, true);
       scope.$watch('sortDirection', updateHandler, true);
-      scope.$watch('rows', function(){
+      scope.$watch('rows', function(newVal, oldVal){
         // clear cache when data changes
         scope.filterState.cache = {};
 
         updateSelection();
         updateHandler();
+
+        if (angular.isArray(newVal) && angular.isArray(oldVal) && newVal.length < oldVal.length) {
+          // because row count is reducing, we should perform scrollHandler to see if we need to 
+          // change scrolling or visible rows
+          scope.scrollHandler();
+        }
       }, true);
     }
 

@@ -208,13 +208,13 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
           scope.options.scrollingPromise = scrollDeferred.promise;
         }
         // perform scrolling code
-        scrollHandler();
+        scope.scrollHandler();
       }
       // add loop to next repaint cycle
       raf(loop);
     };
 
-    var scrollHandler = function() {
+    scope.scrollHandler = function() {
 
       scope.calculateRowLimit();
 
@@ -237,7 +237,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         scrollDeferred = null;
       }
       scope.options.scrollingPromise = null;
-      scope.$digest();
+      if (!scope.$root.$$phase) {
+        scope.$digest();
+      }
       scope.userScrollSaved = scope.userScroll;
     };
 

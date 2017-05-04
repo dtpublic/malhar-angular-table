@@ -557,12 +557,12 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
             scope.options.scrollingPromise = scrollDeferred.promise;
           }
           // perform scrolling code
-          scrollHandler();
+          scope.scrollHandler();
         }
         // add loop to next repaint cycle
         raf(loop);
       };
-      var scrollHandler = function () {
+      scope.scrollHandler = function () {
         scope.calculateRowLimit();
         var scrollTop = scope.scrollDiv[0].scrollTop;
         var rowHeight = scope.rowHeight;
@@ -578,7 +578,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
           scrollDeferred = null;
         }
         scope.options.scrollingPromise = null;
-        scope.$digest();
+        if (!scope.$root.$$phase) {
+          scope.$digest();
+        }
         scope.userScrollSaved = scope.userScroll;
       };
       scope.scrollDiv = element.find('.mlhr-rows-table-wrapper');
@@ -834,11 +836,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
       scope.$watch('sortOrder', updateHandler, true);
       scope.$watch('sortDirection', updateHandler, true);
-      scope.$watch('rows', function () {
+      scope.$watch('rows', function (newVal, oldVal) {
         // clear cache when data changes
         scope.filterState.cache = {};
         updateSelection();
         updateHandler();
+        if (angular.isArray(newVal) && angular.isArray(oldVal) && newVal.length < oldVal.length) {
+          // because row count is reducing, we should perform scrollHandler to see if we need to 
+          // change scrolling or visible rows
+          scope.scrollHandler();
+        }
       }, true);
     }
     return {
@@ -876,9 +883,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableSelector', []).directi
     scope: false,
     link: function postLink(scope, element) {
       var selected = scope.selected;
-      var row = scope.row;
       var column = scope.column;
       element.on('click', function () {
+        var row = scope.row;
         scope.options.__selectionColumn = column;
         // Retrieve position in selected list
         var idx = selected.indexOf(column.selectObject ? row : row[column.key]);
