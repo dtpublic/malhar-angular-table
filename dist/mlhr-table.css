@@ -15,11 +15,25 @@
 /* the visible table header */
 
 .mlhr-header-table {
+  background-color: white;
+  /* need background white since header is on top of visible rows */
   border-bottom: none;
+  position: sticky;
+  /* this is used to float header at top of div (equivalent to relative + fixed) */
+  position: -webkit-sticky;
+  /* for safari */
+  top: 0px;
+  /* float at top of div */
+  z-index: 99;
+  /* z-index of 99 to show on top of visible rows */
 }
 
 .mlhr-header-table thead > tr > th {
   border-width: 1px;
+}
+
+.mlhr-header-table thead > tr:last-child > td {
+  border-bottom: 1px solid #CCC;
 }
 
 /* the invisible table header; used for correct column widths */
@@ -35,6 +49,13 @@
 
 .mlhr-rows-table-wrapper {
   overflow: auto;
+}
+
+.mlhr-rows-table {
+  background-color: white;
+  /* need backgroudn white because this is on top of dummy rows */
+  position: relative;
+  /* position relative to div so it can be moved up/down according to div scroll top */
 }
 
 .mlhr-rows-table > tbody + tbody {

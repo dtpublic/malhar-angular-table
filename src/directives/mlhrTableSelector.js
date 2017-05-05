@@ -23,9 +23,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableSelector', [])
     scope: false,
     link: function postLink(scope, element) {
       var selected = scope.selected;
-      var row = scope.row;
       var column = scope.column;
       element.on('click', function() {
+        var row = scope.row;
         scope.options.__selectionColumn = column;
 
         // Retrieve position in selected list

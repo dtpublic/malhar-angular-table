@@ -1,60 +1,67 @@
 <div class="mlhr-table-wrapper">
-  <table ng-class="classes" class="mlhr-table mlhr-header-table">
-    <thead>
-      <tr ui-sortable="sortableOptions" ng-model="columns">
-        <th 
-          scope="col" 
-          ng-repeat="column in columns" 
-          ng-click="toggleSort($event,column)" 
-          ng-class="{'sortable-column' : column.sort, 'select-column': column.selector}" 
-          ng-attr-title="{{ column.title || '' }}"
-          ng-style="{ width: column.width, 'min-width': column.width, 'max-width': column.width }"
-        >
-          <span class="column-text">
-            <input ng-if="column.selector" type="checkbox" ng-checked="isSelectedAll()" ng-click="toggleSelectAll($event)" />
-            {{column.hasOwnProperty('label') ? column.label : column.id }}
-            <span 
-              ng-if="column.sort" 
-              title="This column is sortable. Click to toggle sort order. Hold shift while clicking multiple columns to stack sorting."
-              class="sorting-icon {{ getSortClass( sortDirection[column.id] ) }}"
-            ></span>
-          </span>
-          <span 
-            ng-if="!column.lockWidth"
-            ng-class="{'discreet-width': !!column.width, 'column-resizer': true}"
-            title="Click and drag to set discreet width. Click once to clear discreet width."
-            ng-mousedown="startColumnResize($event, column)"
-          >
-            &nbsp;
-          </span>
-        </th>
-      </tr>
-      <tr ng-if="hasFilterFields()" class="mlhr-table-filter-row">
-        <td ng-repeat="column in columns" ng-class="'column-' + column.id">
-          <input 
-            type="text"
-            ng-if="(column.filter)"
-            ng-model="searchTerms[column.id]"
-            ng-attr-placeholder="{{ column.filter && column.filter.placeholder }}"
-            ng-attr-title="{{ column.filter && column.filter.title }}"
-            ng-class="{'active': searchTerms[column.id] }"
-          >
-          <button 
-            ng-if="(column.filter)"
-            ng-show="searchTerms[column.id]"
-            class="clear-search-btn"
-            role="button"
-            type="button"
-            ng-click="clearAndFocusSearch(column.id)"
-          >
-            &times;
-          </button>
-
-        </td>
-      </tr>
-    </thead>
-  </table>
   <div class="mlhr-rows-table-wrapper" ng-style="tbodyNgStyle">
+    <table ng-class="classes" class="mlhr-table mlhr-header-table">
+      <thead>
+        <tr ui-sortable="sortableOptions" ng-model="columns">
+          <th 
+            scope="col" 
+            ng-repeat="column in columns" 
+            ng-click="toggleSort($event,column)" 
+            ng-class="{'sortable-column' : column.sort, 'select-column': column.selector}" 
+            ng-attr-title="{{ column.title || '' }}"
+            ng-style="{ width: column.width, 'min-width': column.width, 'max-width': column.width }"
+          >
+            <span class="column-text">
+              <input ng-if="column.selector" type="checkbox" ng-checked="isSelectedAll()" ng-click="toggleSelectAll($event)" />
+              {{column.hasOwnProperty('label') ? column.label : column.id }}
+              <span 
+                ng-if="column.sort" 
+                title="This column is sortable. Click to toggle sort order. Hold shift while clicking multiple columns to stack sorting."
+                class="sorting-icon {{ getSortClass( sortDirection[column.id] ) }}"
+              ></span>
+            </span>
+            <span 
+              ng-if="!column.lockWidth"
+              ng-class="{'discreet-width': !!column.width, 'column-resizer': true}"
+              title="Click and drag to set discreet width. Click once to clear discreet width."
+              ng-mousedown="startColumnResize($event, column)"
+            >
+              &nbsp;
+            </span>
+          </th>
+        </tr>
+        <tr ng-if="hasFilterFields()" class="mlhr-table-filter-row">
+          <td ng-repeat="column in columns" ng-class="'column-' + column.id">
+            <input 
+              type="text"
+              ng-if="(column.filter)"
+              ng-model="searchTerms[column.id]"
+              ng-attr-placeholder="{{ column.filter && column.filter.placeholder }}"
+              ng-attr-title="{{ column.filter && column.filter.title }}"
+              ng-class="{'active': searchTerms[column.id] }"
+            >
+            <button 
+              ng-if="(column.filter)"
+              ng-show="searchTerms[column.id]"
+              class="clear-search-btn"
+              role="button"
+              type="button"
+              ng-click="clearAndFocusSearch(column.id)"
+            >
+              &times;
+            </button>
+
+          </td>
+        </tr>
+      </thead>
+    </table>
+    <table ng-class="classes" class="mlhr-table mlhr-dummy-table mlhr-rows-scroller">
+      <tbody mlhr-table-dummy-rows
+        mlhr-table-dummy-rows-filtered-count="filterState.filterCount"
+        mlhr-table-dummy-rows-visible-count="visible_rows.length"
+        columns="columns"
+        cell-content="..."></tbody>
+    </table>
     <table ng-class="classes" class="mlhr-table mlhr-rows-table">
       <thead>
         <th 
@@ -80,9 +87,7 @@
           </td>
         </tr>
       </tbody>
-      <tbody mlhr-table-dummy-rows="rowOffset" columns="columns" cell-content="..."></tbody>
       <tbody mlhr-table-rows class="mlhr-table-rendered-rows"></tbody>
-      <tbody mlhr-table-dummy-rows="filterState.filterCount - rowOffset - visible_rows.length" columns="columns" cell-content="..."></tbody>
     </table>
   </div>
 </div>

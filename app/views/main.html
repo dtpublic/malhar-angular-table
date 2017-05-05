@@ -7,7 +7,9 @@
 <div>
 	<button class="btn btn-default btn-sm" ng-click="removeHalf()">remove half</button>
 	&nbsp;&nbsp;&nbsp;
-	<input id="autoRefresh" type="checkbox" ng-model="autoRefresh" /> <label for="autoRefresh">Auto refresh data</label>
+	<input id="autoRefresh" type="checkbox" ng-model="autoRefresh" ng-click="autoAppend = false;" /> <label for="autoRefresh">Auto refresh data</label>
+	&nbsp;&nbsp;&nbsp;
+	<input id="autoAppend" type="checkbox" ng-model="autoAppend" ng-click="autoRefresh = false;" /> <label for="autoAppend">Auto append data</label>
 </div>
 
 Selected rows: 

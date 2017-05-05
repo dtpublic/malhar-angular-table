@@ -125,6 +125,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
     defaults(scope.options, {
       bgSizeMultiplier: 1,
       rowPadding: 10,
+      headerHeight: 77,
       bodyHeight: 300,
       fixedHeight: false,
       defaultRowHeight: 40,
@@ -172,13 +173,11 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       scope.$watch('options.pagingScheme', scope.saveToStorage);
       //  - row limit
       scope.$watch('options.bodyHeight', function() {
+        var headerHeight = scope.tableHeader ? scope.tableHeader.height() || scope.options.headerHeight : scope.options.headerHeight;
         scope.calculateRowLimit();
         scope.tbodyNgStyle = {};
-        scope.tbodyNgStyle[ scope.options.fixedHeight ? 'height' : 'max-height' ] = scope.options.bodyHeight + 'px';
+        scope.tbodyNgStyle[ scope.options.fixedHeight ? 'height' : 'max-height' ] = (scope.options.bodyHeight + headerHeight) + 'px';
         scope.saveToStorage();
-      });
-      scope.$watch('filterState.filterCount', function() {
-        scope.onScroll();
       });
       scope.$watch('rowHeight', function(size) {
         element.find('tr.mlhr-table-dummy-row').css('background-size','auto ' + size * scope.options.bgSizeMultiplier + 'px');
@@ -188,7 +187,34 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
     }
 
     var scrollDeferred;
-    var debouncedScrollHandler = debounce(function() {
+    var scrollTopSaved = -1;
+
+    // determine requestAnimationFrame compabitility
+    var raf = window.requestAnimationFrame
+            || window.mozRequestAnimationFrame
+            || window.webkitRequestAnimationFrame
+            || window.msRequestAnimationFrame
+            || function(f) { return setTimeout(f, scope.options.scrollDebounce) };
+
+    var loop = function(timeStamp) {
+      if (scrollTopSaved !== scope.scrollDiv.scrollTop()) {
+        scope.tableHeader = scope.tableHeader || element.find('.mlhr-table.mlhr-header-table');
+        scope.tableDummy = scope.tableDummy || element.find('.mlhr-table.mlhr-dummy-table.table');
+        scope.tableRows = scope.tableRows || element.find('.mlhr-table.mlhr-rows-table.table');
+
+        scrollTopSaved = scope.scrollDiv.scrollTop();
+        if (!scrollDeferred) {
+          scrollDeferred = $q.defer();
+          scope.options.scrollingPromise = scrollDeferred.promise;
+        }
+        // perform scrolling code
+        scope.scrollHandler();
+      }
+      // add loop to next repaint cycle
+      raf(loop);
+    };
+
+    scope.scrollHandler = function() {
 
       scope.calculateRowLimit();
 
@@ -200,36 +226,32 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         return false;
       }
 
-      scope.rowOffset = Math.max(0, Math.floor(scrollTop / rowHeight) - scope.options.rowPadding);
+      // make sure we adjust rowOffset so that last row renders at bottom of div
+      scope.rowOffset = Math.max(0, Math.min(scope.filterState.filterCount - scope.rowLimit, Math.floor(scrollTop / rowHeight) - scope.options.rowPadding));
 
-      scrollDeferred.resolve();
+      // move the table rows to a position according to the div scroll top
+      scope.tableRows.css('top', '-' + (scope.tableDummy.height() - rowHeight * scope.rowOffset) + 'px');
 
-      scrollDeferred = null;
-
-      scope.options.scrollingPromise = null;
-
-      scope.$digest();
-
-    }, scope.options.scrollDebounce);
-
-    scope.onScroll = function() {
-      if (!scrollDeferred) {
-        scrollDeferred = $q.defer();
-        scope.options.scrollingPromise = scrollDeferred.promise;
+      if (scrollDeferred) {
+        scrollDeferred.resolve();
+        scrollDeferred = null;
       }
-      debouncedScrollHandler();
+      scope.options.scrollingPromise = null;
+      if (!scope.$root.$$phase) {
+        scope.$digest();
+      }
+      scope.userScrollSaved = scope.userScroll;
     };
 
     scope.scrollDiv = element.find('.mlhr-rows-table-wrapper');
-    scope.scrollDiv.on('scroll', scope.onScroll);
+
+    raf(loop);
 
     // Wait for a render
     $timeout(function() {
       // Calculates rowHeight and rowLimit
       scope.calculateRowLimit();
-
     }, 0);
-
 
     scope.api = {
       isSelectedAll: scope.isSelectedAll,
