@@ -75,6 +75,15 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   }
 
   function link(scope, element) {
+    var REFRESH_FRAME_RATE = 500;     // Throttle the bodyHeight update to .5 second
+
+    // determine requestAnimationFrame compabitility
+    var raf = window.requestAnimationFrame
+            || window.mozRequestAnimationFrame
+            || window.webkitRequestAnimationFrame
+            || window.msRequestAnimationFrame
+            || function(f) { return setTimeout(f, scope.options.scrollDebounce) };
+
     // This tableId is used to cache the sort column function
     // It's used in the mlhrTableSortFunctions filter
     // If this value isn't set, user will see a bug when sorting
@@ -172,13 +181,34 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       //  - paging scheme
       scope.$watch('options.pagingScheme', scope.saveToStorage);
       //  - row limit
-      scope.$watch('options.bodyHeight', function() {
-        var headerHeight = scope.tableHeader ? scope.tableHeader.height() || scope.options.headerHeight : scope.options.headerHeight;
-        scope.calculateRowLimit();
-        scope.tbodyNgStyle = {};
-        scope.tbodyNgStyle[ scope.options.fixedHeight ? 'height' : 'max-height' ] = (scope.options.bodyHeight + headerHeight) + 'px';
+
+
+      // using requestAnimationFrame to watch for bodyHeight change to get better display response
+      var bodyHeightSaved = undefined;
+      var lastBodyHeightUpdated = Date.now();
+
+
+      var bodyHeightChanged = function() {
+        var savedRowOffset = scope.rowOffset;
+        scope.scrollHandler();
+        if (scope.rowOffset === savedRowOffset && scope.dummyScope) {
+          scope.dummyScope.updateHeight();
+        }
+        scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
         scope.saveToStorage();
-      });
+      };
+
+      var bodyHeightWatchLoop = function() {
+        if (scope.options.bodyHeight !== bodyHeightSaved && Date.now() - lastBodyHeightUpdated > REFRESH_FRAME_RATE) {
+          lastBodyHeightUpdated = Date.now();
+          bodyHeightSaved = scope.options.bodyHeight;
+          bodyHeightChanged();
+        }
+        raf(bodyHeightWatchLoop);
+      };
+
+      raf(bodyHeightWatchLoop);
+
       scope.$watch('rowHeight', function(size) {
         element.find('tr.mlhr-table-dummy-row').css('background-size','auto ' + size * scope.options.bgSizeMultiplier + 'px');
       });
@@ -188,13 +218,6 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
 
     var scrollDeferred;
     var scrollTopSaved = -1;
-
-    // determine requestAnimationFrame compabitility
-    var raf = window.requestAnimationFrame
-            || window.mozRequestAnimationFrame
-            || window.webkitRequestAnimationFrame
-            || window.msRequestAnimationFrame
-            || function(f) { return setTimeout(f, scope.options.scrollDebounce) };
 
     var loop = function(timeStamp) {
       if (scrollTopSaved !== scope.scrollDiv.scrollTop()) {

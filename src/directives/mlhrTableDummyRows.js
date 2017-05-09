@@ -30,8 +30,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', [])
     template: '<tr class="mlhr-table-dummy-row" ng-style="{ height: dummyRowHeight + \'px\'}"><td ng-show="dummyRowHeight" ng-attr-colspan="{{columns.length}}"></td></tr>',
     scope: true,
     link: function(scope, element, attrs) {
-      function updateHeight() {
-        if (scope.$parent.tableRows) {
+      scope.$parent.dummyScope = scope;
+      scope.updateHeight = function() {
+        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_row) {
           scope.dummyRowHeight = (scope.$parent.filterState.filterCount - scope.$parent.visible_rows.length) * scope.rowHeight;
           var rowHeight = scope.$parent.tableRows.height() / scope.$parent.visible_rows.length;
           scope.$parent.tableRows.css('top', '-' + (scope.dummyRowHeight - rowHeight * scope.$parent.rowOffset) + 'px');
@@ -39,12 +40,12 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', [])
       }
       scope.$watch(attrs.mlhrTableDummyRowsFilteredCount, function(newVal, oldVal) {
         if (newVal !== oldVal) {
-          updateHeight();
+          scope.updateHeight();
         }
       });
       scope.$watch(attrs.mlhrTableDummyRowsVisibleCount, function(newVal, oldVal) {
         if (newVal !== oldVal) {
-          updateHeight();
+          scope.updateHeight();
         }
       });
     }

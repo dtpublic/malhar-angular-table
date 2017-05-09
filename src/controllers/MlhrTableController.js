@@ -27,7 +27,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
   // SCOPE FUNCTIONS
   $scope.getSelectableRows = function() {
     var tableRowFilter = $filter('mlhrTableRowFilter');
-    return angular.isArray($scope.rows) ? tableRowFilter($scope.rows, $scope.columns, $scope.searchTerms, $scope.filterState) : [];
+    return angular.isArray($scope.rows) ? tableRowFilter($scope.rows, $scope.columns, $scope.searchTerms, $scope.filterState, $scope.options) : [];
   };
 
   $scope.isSelectedAll = function() {
