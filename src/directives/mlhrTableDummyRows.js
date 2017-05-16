@@ -32,7 +32,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', [])
     link: function(scope, element, attrs) {
       scope.$parent.dummyScope = scope;
       scope.updateHeight = function() {
-        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_row) {
+        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_rows) {
           scope.dummyRowHeight = (scope.$parent.filterState.filterCount - scope.$parent.visible_rows.length) * scope.rowHeight;
           var rowHeight = scope.$parent.tableRows.height() / scope.$parent.visible_rows.length;
           scope.$parent.tableRows.css('top', '-' + (scope.dummyRowHeight - rowHeight * scope.$parent.rowOffset) + 'px');

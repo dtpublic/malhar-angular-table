@@ -370,7 +370,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       }
     };
     $scope.calculateRowLimit = function () {
-      var rowHeight = $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
+      var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
       $scope.rowHeight = rowHeight || $scope.options.defaultRowHeight || 20;
       $scope.rowLimit = Math.ceil($scope.options.bodyHeight / $scope.rowHeight) + $scope.options.rowPadding * 2;
     };
@@ -582,7 +582,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         scope.calculateRowLimit();
         var scrollTop = scope.scrollDiv[0].scrollTop;
         var rowHeight = scope.rowHeight;
-        if (rowHeight === 0) {
+        if (rowHeight === 0 || scope.tableRows === undefined) {
           return false;
         }
         // make sure we adjust rowOffset so that last row renders at bottom of div
@@ -739,7 +739,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', []).direct
     link: function (scope, element, attrs) {
       scope.$parent.dummyScope = scope;
       scope.updateHeight = function () {
-        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_row) {
+        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_rows) {
           scope.dummyRowHeight = (scope.$parent.filterState.filterCount - scope.$parent.visible_rows.length) * scope.rowHeight;
           var rowHeight = scope.$parent.tableRows.height() / scope.$parent.visible_rows.length;
           scope.$parent.tableRows.css('top', '-' + (scope.dummyRowHeight - rowHeight * scope.$parent.rowOffset) + 'px');

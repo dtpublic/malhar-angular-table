@@ -245,7 +245,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
 
       var rowHeight = scope.rowHeight;
 
-      if (rowHeight === 0) {
+      if (rowHeight === 0 || scope.tableRows === undefined) {
         return false;
       }
 
