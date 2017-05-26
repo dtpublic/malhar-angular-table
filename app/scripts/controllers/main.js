@@ -167,7 +167,6 @@ angular.module('datatorrent.mlhrTable.ghPage')
     // Table data
     $scope.my_table_data = [];
 
-
     // Selected rows
     $scope.my_selected_rows = [];
 
@@ -178,6 +177,7 @@ angular.module('datatorrent.mlhrTable.ghPage')
       highlightRow: function(row) {
         return (row.weight > 200 || row.weight < 100);
       },
+      bodyHeight: 400,
       storage: localStorage,
       storageKey: 'gh-page-table',
       storageHash: 'a9s8df9a8s7df98as7dh',

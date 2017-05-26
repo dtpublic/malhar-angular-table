@@ -33,7 +33,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     // SCOPE FUNCTIONS
     $scope.getSelectableRows = function () {
       var tableRowFilter = $filter('mlhrTableRowFilter');
-      return angular.isArray($scope.rows) ? tableRowFilter($scope.rows, $scope.columns, $scope.searchTerms, $scope.filterState) : [];
+      return angular.isArray($scope.rows) ? tableRowFilter($scope.rows, $scope.columns, $scope.searchTerms, $scope.filterState, $scope.options) : [];
     };
     $scope.isSelectedAll = function () {
       if (!angular.isArray($scope.rows) || !angular.isArray($scope.selected)) {
@@ -370,7 +370,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       }
     };
     $scope.calculateRowLimit = function () {
-      var rowHeight = $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
+      var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
       $scope.rowHeight = rowHeight || $scope.options.defaultRowHeight || 20;
       $scope.rowLimit = Math.ceil($scope.options.bodyHeight / $scope.rowHeight) + $scope.options.rowPadding * 2;
     };
@@ -447,6 +447,12 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       return obj;
     }
     function link(scope, element) {
+      var REFRESH_FRAME_RATE = 500;
+      // Throttle the bodyHeight update to .5 second
+      // determine requestAnimationFrame compabitility
+      var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (f) {
+          return setTimeout(f, scope.options.scrollDebounce);
+        };
       // This tableId is used to cache the sort column function
       // It's used in the mlhrTableSortFunctions filter
       // If this value isn't set, user will see a bug when sorting
@@ -528,13 +534,27 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         //  - paging scheme
         scope.$watch('options.pagingScheme', scope.saveToStorage);
         //  - row limit
-        scope.$watch('options.bodyHeight', function () {
-          var headerHeight = scope.tableHeader ? scope.tableHeader.height() || scope.options.headerHeight : scope.options.headerHeight;
-          scope.calculateRowLimit();
-          scope.tbodyNgStyle = {};
-          scope.tbodyNgStyle[scope.options.fixedHeight ? 'height' : 'max-height'] = scope.options.bodyHeight + headerHeight + 'px';
+        // using requestAnimationFrame to watch for bodyHeight change to get better display response
+        var bodyHeightSaved = undefined;
+        var lastBodyHeightUpdated = Date.now();
+        var bodyHeightChanged = function () {
+          var savedRowOffset = scope.rowOffset;
+          scope.scrollHandler();
+          if (scope.rowOffset === savedRowOffset && scope.dummyScope) {
+            scope.dummyScope.updateHeight();
+          }
+          scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
           scope.saveToStorage();
-        });
+        };
+        var bodyHeightWatchLoop = function () {
+          if (scope.options.bodyHeight !== bodyHeightSaved && Date.now() - lastBodyHeightUpdated > REFRESH_FRAME_RATE) {
+            lastBodyHeightUpdated = Date.now();
+            bodyHeightSaved = scope.options.bodyHeight;
+            bodyHeightChanged();
+          }
+          raf(bodyHeightWatchLoop);
+        };
+        raf(bodyHeightWatchLoop);
         scope.$watch('rowHeight', function (size) {
           element.find('tr.mlhr-table-dummy-row').css('background-size', 'auto ' + size * scope.options.bgSizeMultiplier + 'px');
         });  //  - when column gets enabled or disabled
@@ -542,10 +562,6 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       }
       var scrollDeferred;
       var scrollTopSaved = -1;
-      // determine requestAnimationFrame compabitility
-      var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (f) {
-          return setTimeout(f, scope.options.scrollDebounce);
-        };
       var loop = function (timeStamp) {
         if (scrollTopSaved !== scope.scrollDiv.scrollTop()) {
           scope.tableHeader = scope.tableHeader || element.find('.mlhr-table.mlhr-header-table');
@@ -566,7 +582,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         scope.calculateRowLimit();
         var scrollTop = scope.scrollDiv[0].scrollTop;
         var rowHeight = scope.rowHeight;
-        if (rowHeight === 0) {
+        if (rowHeight === 0 || scope.tableRows === undefined) {
           return false;
         }
         // make sure we adjust rowOffset so that last row renders at bottom of div
@@ -721,21 +737,22 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', []).direct
     template: '<tr class="mlhr-table-dummy-row" ng-style="{ height: dummyRowHeight + \'px\'}"><td ng-show="dummyRowHeight" ng-attr-colspan="{{columns.length}}"></td></tr>',
     scope: true,
     link: function (scope, element, attrs) {
-      function updateHeight() {
-        if (scope.$parent.tableRows) {
+      scope.$parent.dummyScope = scope;
+      scope.updateHeight = function () {
+        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_rows) {
           scope.dummyRowHeight = (scope.$parent.filterState.filterCount - scope.$parent.visible_rows.length) * scope.rowHeight;
           var rowHeight = scope.$parent.tableRows.height() / scope.$parent.visible_rows.length;
           scope.$parent.tableRows.css('top', '-' + (scope.dummyRowHeight - rowHeight * scope.$parent.rowOffset) + 'px');
         }
-      }
+      };
       scope.$watch(attrs.mlhrTableDummyRowsFilteredCount, function (newVal, oldVal) {
         if (newVal !== oldVal) {
-          updateHeight();
+          scope.updateHeight();
         }
       });
       scope.$watch(attrs.mlhrTableDummyRowsVisibleCount, function (newVal, oldVal) {
         if (newVal !== oldVal) {
-          updateHeight();
+          scope.updateHeight();
         }
       });
     }
@@ -1507,7 +1524,7 @@ angular.module('datatorrent.mlhrTable.templates', [
 angular.module('src/templates/mlhrTable.tpl.html', []).run([
   '$templateCache',
   function ($templateCache) {
-    $templateCache.put('src/templates/mlhrTable.tpl.html', '<div class="mlhr-table-wrapper">\n' + '  <div class="mlhr-rows-table-wrapper" ng-style="tbodyNgStyle">\n' + '    <table ng-class="classes" class="mlhr-table mlhr-header-table">\n' + '      <thead>\n' + '        <tr ui-sortable="sortableOptions" ng-model="columns">\n' + '          <th \n' + '            scope="col" \n' + '            ng-repeat="column in columns" \n' + '            ng-click="toggleSort($event,column)" \n' + '            ng-class="{\'sortable-column\' : column.sort, \'select-column\': column.selector}" \n' + '            ng-attr-title="{{ column.title || \'\' }}"\n' + '            ng-style="{ width: column.width, \'min-width\': column.width, \'max-width\': column.width }"\n' + '          >\n' + '            <span class="column-text">\n' + '              <input ng-if="column.selector" type="checkbox" ng-checked="isSelectedAll()" ng-click="toggleSelectAll($event)" />\n' + '              {{column.hasOwnProperty(\'label\') ? column.label : column.id }}\n' + '              <span \n' + '                ng-if="column.sort" \n' + '                title="This column is sortable. Click to toggle sort order. Hold shift while clicking multiple columns to stack sorting."\n' + '                class="sorting-icon {{ getSortClass( sortDirection[column.id] ) }}"\n' + '              ></span>\n' + '            </span>\n' + '            <span \n' + '              ng-if="!column.lockWidth"\n' + '              ng-class="{\'discreet-width\': !!column.width, \'column-resizer\': true}"\n' + '              title="Click and drag to set discreet width. Click once to clear discreet width."\n' + '              ng-mousedown="startColumnResize($event, column)"\n' + '            >\n' + '              &nbsp;\n' + '            </span>\n' + '          </th>\n' + '        </tr>\n' + '        <tr ng-if="hasFilterFields()" class="mlhr-table-filter-row">\n' + '          <td ng-repeat="column in columns" ng-class="\'column-\' + column.id">\n' + '            <input \n' + '              type="text"\n' + '              ng-if="(column.filter)"\n' + '              ng-model="searchTerms[column.id]"\n' + '              ng-attr-placeholder="{{ column.filter && column.filter.placeholder }}"\n' + '              ng-attr-title="{{ column.filter && column.filter.title }}"\n' + '              ng-class="{\'active\': searchTerms[column.id] }"\n' + '            >\n' + '            <button \n' + '              ng-if="(column.filter)"\n' + '              ng-show="searchTerms[column.id]"\n' + '              class="clear-search-btn"\n' + '              role="button"\n' + '              type="button"\n' + '              ng-click="clearAndFocusSearch(column.id)"\n' + '            >\n' + '              &times;\n' + '            </button>\n' + '\n' + '          </td>\n' + '        </tr>\n' + '      </thead>\n' + '    </table>\n' + '    <table ng-class="classes" class="mlhr-table mlhr-dummy-table mlhr-rows-scroller">\n' + '      <tbody mlhr-table-dummy-rows\n' + '        mlhr-table-dummy-rows-filtered-count="filterState.filterCount"\n' + '        mlhr-table-dummy-rows-visible-count="visible_rows.length"\n' + '        columns="columns"\n' + '        cell-content="..."></tbody>\n' + '    </table>\n' + '    <table ng-class="classes" class="mlhr-table mlhr-rows-table">\n' + '      <thead>\n' + '        <th \n' + '            scope="col"\n' + '            ng-repeat="column in columns" \n' + '            ng-style="{ width: column.width, \'min-width\': column.width, \'max-width\': column.width }"\n' + '          ></th>\n' + '        </tr>\n' + '      </thead>\n' + '      <tbody>\n' + '        <tr ng-if="visible_rows.length === 0">\n' + '          <td ng-attr-colspan="{{columns.length}}" class="space-holder-row-cell">\n' + '            <div ng-if="options.loadingError">\n' + '              <div ng-if="!options.loading && options.loadingErrorTemplateUrl" ng-include="options.loadingErrorTemplateUrl"></div>\n' + '              <div ng-if="!options.loading && !options.loadingErrorTemplateUrl">{{ options.loadingErrorText }}</div>\n' + '            </div>\n' + '            <div ng-if="!options.loadingError">\n' + '              <div ng-if="options.loading && options.loadingTemplateUrl" ng-include="options.loadingTemplateUrl"></div>\n' + '              <div ng-if="options.loading && !options.loadingTemplateUrl">{{ options.loadingText }}</div>\n' + '              <div ng-if="!options.loading && options.noRowsTemplateUrl" ng-include="options.noRowsTemplateUrl"></div>\n' + '              <div ng-if="!options.loading && !options.noRowsTemplateUrl">{{ options.noRowsText }}</div>\n' + '            </div>\n' + '          </td>\n' + '        </tr>\n' + '      </tbody>\n' + '      <tbody mlhr-table-rows class="mlhr-table-rendered-rows"></tbody>\n' + '    </table>\n' + '  </div>\n' + '</div>\n' + '');
+    $templateCache.put('src/templates/mlhrTable.tpl.html', '<div class="mlhr-table-wrapper">\n' + '  <div class="mlhr-rows-table-wrapper">\n' + '    <table ng-class="classes" class="mlhr-table mlhr-header-table">\n' + '      <thead>\n' + '        <tr ui-sortable="sortableOptions" ng-model="columns">\n' + '          <th \n' + '            scope="col" \n' + '            ng-repeat="column in columns" \n' + '            ng-click="toggleSort($event,column)" \n' + '            ng-class="{\'sortable-column\' : column.sort, \'select-column\': column.selector}" \n' + '            ng-attr-title="{{ column.title || \'\' }}"\n' + '            ng-style="{ width: column.width, \'min-width\': column.width, \'max-width\': column.width }"\n' + '          >\n' + '            <span class="column-text">\n' + '              <input ng-if="column.selector" type="checkbox" ng-checked="isSelectedAll()" ng-click="toggleSelectAll($event)" />\n' + '              {{column.hasOwnProperty(\'label\') ? column.label : column.id }}\n' + '              <span \n' + '                ng-if="column.sort" \n' + '                title="This column is sortable. Click to toggle sort order. Hold shift while clicking multiple columns to stack sorting."\n' + '                class="sorting-icon {{ getSortClass( sortDirection[column.id] ) }}"\n' + '              ></span>\n' + '            </span>\n' + '            <span \n' + '              ng-if="!column.lockWidth"\n' + '              ng-class="{\'discreet-width\': !!column.width, \'column-resizer\': true}"\n' + '              title="Click and drag to set discreet width. Click once to clear discreet width."\n' + '              ng-mousedown="startColumnResize($event, column)"\n' + '            >\n' + '              &nbsp;\n' + '            </span>\n' + '          </th>\n' + '        </tr>\n' + '        <tr ng-if="hasFilterFields()" class="mlhr-table-filter-row">\n' + '          <td ng-repeat="column in columns" ng-class="\'column-\' + column.id">\n' + '            <input \n' + '              type="text"\n' + '              ng-if="(column.filter)"\n' + '              ng-model="searchTerms[column.id]"\n' + '              ng-attr-placeholder="{{ column.filter && column.filter.placeholder }}"\n' + '              ng-attr-title="{{ column.filter && column.filter.title }}"\n' + '              ng-class="{\'active\': searchTerms[column.id] }"\n' + '            >\n' + '            <button \n' + '              ng-if="(column.filter)"\n' + '              ng-show="searchTerms[column.id]"\n' + '              class="clear-search-btn"\n' + '              role="button"\n' + '              type="button"\n' + '              ng-click="clearAndFocusSearch(column.id)"\n' + '            >\n' + '              &times;\n' + '            </button>\n' + '\n' + '          </td>\n' + '        </tr>\n' + '      </thead>\n' + '    </table>\n' + '    <table ng-class="classes" class="mlhr-table mlhr-dummy-table mlhr-rows-scroller">\n' + '      <tbody mlhr-table-dummy-rows\n' + '        mlhr-table-dummy-rows-filtered-count="filterState.filterCount"\n' + '        mlhr-table-dummy-rows-visible-count="visible_rows.length"\n' + '        columns="columns"\n' + '        cell-content="..."></tbody>\n' + '    </table>\n' + '    <table ng-class="classes" class="mlhr-table mlhr-rows-table">\n' + '      <thead>\n' + '        <th \n' + '            scope="col"\n' + '            ng-repeat="column in columns" \n' + '            ng-style="{ width: column.width, \'min-width\': column.width, \'max-width\': column.width }"\n' + '          ></th>\n' + '        </tr>\n' + '      </thead>\n' + '      <tbody>\n' + '        <tr ng-if="visible_rows.length === 0">\n' + '          <td ng-attr-colspan="{{columns.length}}" class="space-holder-row-cell">\n' + '            <div ng-if="options.loadingError">\n' + '              <div ng-if="!options.loading && options.loadingErrorTemplateUrl" ng-include="options.loadingErrorTemplateUrl"></div>\n' + '              <div ng-if="!options.loading && !options.loadingErrorTemplateUrl">{{ options.loadingErrorText }}</div>\n' + '            </div>\n' + '            <div ng-if="!options.loadingError">\n' + '              <div ng-if="options.loading && options.loadingTemplateUrl" ng-include="options.loadingTemplateUrl"></div>\n' + '              <div ng-if="options.loading && !options.loadingTemplateUrl">{{ options.loadingText }}</div>\n' + '              <div ng-if="!options.loading && options.noRowsTemplateUrl" ng-include="options.noRowsTemplateUrl"></div>\n' + '              <div ng-if="!options.loading && !options.noRowsTemplateUrl">{{ options.noRowsText }}</div>\n' + '            </div>\n' + '          </td>\n' + '        </tr>\n' + '      </tbody>\n' + '      <tbody mlhr-table-rows class="mlhr-table-rendered-rows"></tbody>\n' + '    </table>\n' + '  </div>\n' + '</div>\n' + '');
   }
 ]);
 angular.module('src/templates/mlhrTableDummyRows.tpl.html', []).run([
