@@ -533,35 +533,35 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         scope.$watchCollection('searchTerms', scope.saveToStorage);
         //  - paging scheme
         scope.$watch('options.pagingScheme', scope.saveToStorage);
-        //  - row limit
-        // using requestAnimationFrame to watch for bodyHeight change to get better display response
-        var bodyHeightSaved = undefined;
-        var lastBodyHeightUpdated = Date.now();
-        var bodyHeightChanged = function () {
-          var savedRowOffset = scope.rowOffset;
-          scope.scrollHandler();
-          if (scope.rowOffset === savedRowOffset && scope.dummyScope) {
-            scope.dummyScope.updateHeight();
-          }
-          scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
-          scope.saveToStorage();
-        };
-        var bodyHeightWatchLoop = function () {
-          if (scope.options.bodyHeight !== bodyHeightSaved && Date.now() - lastBodyHeightUpdated > REFRESH_FRAME_RATE) {
-            lastBodyHeightUpdated = Date.now();
-            bodyHeightSaved = scope.options.bodyHeight;
-            bodyHeightChanged();
-          }
-          raf(bodyHeightWatchLoop);
-        };
-        raf(bodyHeightWatchLoop);
-        scope.$watch('rowHeight', function (size) {
-          element.find('tr.mlhr-table-dummy-row').css('background-size', 'auto ' + size * scope.options.bgSizeMultiplier + 'px');
-        });  //  - when column gets enabled or disabled
-             //  TODO
       }
+      // using requestAnimationFrame to watch for bodyHeight change to get better display response
+      var bodyHeightSaved = undefined;
+      var lastBodyHeightUpdated = Date.now();
+      var bodyHeightChanged = function () {
+        var savedRowOffset = scope.rowOffset;
+        scope.scrollHandler();
+        if (scope.rowOffset === savedRowOffset && scope.dummyScope) {
+          scope.dummyScope.updateHeight();
+        }
+        scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
+        scope.saveToStorage();
+      };
+      var rafid1;
+      var bodyHeightWatchLoop = function () {
+        if (scope.options.bodyHeight !== bodyHeightSaved && Date.now() - lastBodyHeightUpdated > REFRESH_FRAME_RATE) {
+          lastBodyHeightUpdated = Date.now();
+          bodyHeightSaved = scope.options.bodyHeight;
+          bodyHeightChanged();
+        }
+        rafid1 = raf(bodyHeightWatchLoop);
+      };
+      rafid1 = raf(bodyHeightWatchLoop);
+      scope.$watch('rowHeight', function (size) {
+        element.find('tr.mlhr-table-dummy-row').css('background-size', 'auto ' + size * scope.options.bgSizeMultiplier + 'px');
+      });
       var scrollDeferred;
       var scrollTopSaved = -1;
+      var rafid2;
       var loop = function (timeStamp) {
         if (scrollTopSaved !== scope.scrollDiv.scrollTop()) {
           scope.tableHeader = scope.tableHeader || element.find('.mlhr-table.mlhr-header-table');
@@ -576,7 +576,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
           scope.scrollHandler();
         }
         // add loop to next repaint cycle
-        raf(loop);
+        rafid2 = raf(loop);
       };
       scope.scrollHandler = function () {
         scope.calculateRowLimit();
@@ -600,7 +600,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         scope.userScrollSaved = scope.userScroll;
       };
       scope.scrollDiv = element.find('.mlhr-rows-table-wrapper');
-      raf(loop);
+      rafid2 = raf(loop);
       // Wait for a render
       $timeout(function () {
         // Calculates rowHeight and rowLimit
@@ -634,6 +634,10 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         //scope.options.loadingPromise is optional, not required. So, when it's not specified, scope.options.loading should be set to false. Otherwise, spinner wheel will hang there forever where there is no rows.
         scope.api.setLoading(false);
       }
+      scope.$on('$destroy', function () {
+        cancelAnimationFrame(rafid1);
+        cancelAnimationFrame(rafid2);
+      });
     }
     return {
       templateUrl: 'src/templates/mlhrTable.tpl.html',
