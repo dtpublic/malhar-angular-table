@@ -114,7 +114,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
   };
   // Toggles column sorting
   $scope.toggleSort = function($event, column) {
-
+    var direction;
     // check if even sortable
     if (!column.sort) {
       return;
@@ -127,14 +127,19 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
         case '+':
           // Make descending
           $scope.sortDirection[column.id] = '-';
+          direction = '-';
           break;
         case '-':
           // Remove from sortOrder and direction
           $scope.removeSort(column.id);
+          $scope.$emit('__column.sorted__', {
+            id: column.id
+          });
           break;
         default:
           // Make ascending
           $scope.addSort(column.id, '+');
+          direction = '+';
           break;
       }
 
@@ -142,16 +147,23 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       // shift is not down, disable other
       // columns but toggle two states
       var lastState = $scope.sortDirection[column.id];
+      var replace = true;
       $scope.clearSort();
       if (lastState === '+') {
         $scope.addSort(column.id, '-');
+          direction = '-';
       }
       else {
         $scope.addSort(column.id, '+');
+          direction = '+';
       }
       
     }
-
+    $scope.$emit('__column.sorted__', {
+      id: column.id,
+      direction: direction,
+      replace: replace
+    });
     $scope.saveToStorage();
   };
   // Retrieve className for given sorting state
@@ -289,7 +301,11 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       } else {
         column.width = Math.max(new_width, 0);
       }
-      
+      $scope.$emit('__column.resized__', {
+        id: column.id,
+        width: column.width
+      });
+      $scope.saveToStorage();
       $scope.$apply();
     });
   };
@@ -298,7 +314,10 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     handle: '.column-text',
     helper: 'clone',
     placeholder: 'mlhr-table-column-placeholder',
-    distance: 5
+    distance: 5,
+    stop: function (event, ui) {
+      $scope.$emit('__column.moved__', $scope.columns.map(function(col) { return col.id; }));
+    }
   };
 
   $scope.getActiveColCount = function() {
@@ -327,7 +346,8 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     state.columns = $scope.columns.map(function(col) {
       return {
         id: col.id,
-        disabled: !!col.disabled
+        disabled: !!col.disabled,
+        width: col.width
       };
     });
 
@@ -341,20 +361,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     $scope.storage.setItem($scope.storageKey, JSON.stringify(state));
   };
 
-  $scope.loadFromStorage = function() {
-
-    if (!$scope.storage) {
-      return;
-    }
-
-    // Attempt to parse the storage
-    var stateString = $scope.storage.getItem($scope.storageKey);
-
-    // Was it there?
-    if (!stateString) {
-      return;
-    }
-
+  $scope.processStateString = function (stateString) {
     // Try to parse it
     var state;
     try {
@@ -394,9 +401,15 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       });
 
       $scope.columns.forEach(function(col, i) {
-        ['disabled'].forEach(function(prop) {
-          col[prop] = state.columns[i][prop];
-        });
+        col.disabled = state.columns[i].disabled;
+        if ((state.columns[i].width + '').indexOf('%')) {
+          col.width = state.columns[i].width;
+        } else {
+          var width = parseFloat(state.columns[i].width);
+          if (!isNaN(width)) {
+            col.width = width;
+          }
+        }
       });
 
       // load options
@@ -407,6 +420,22 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     } catch (e) {
       $log.warn('Loading from storage failed!');
     }
+  };
+
+  $scope.loadFromStorage = function() {
+
+    if (!$scope.storage) {
+      return;
+    }
+
+    // Attempt to parse the storage
+    var stateString = $scope.storage.getItem($scope.storageKey);
+
+    // Was it there?
+    if (!stateString) {
+      return;
+    }
+    $scope.processStateString(stateString);
   };
 
   $scope.calculateRowLimit = function() {

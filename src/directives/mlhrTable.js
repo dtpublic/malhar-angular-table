@@ -75,6 +75,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   }
 
   function link(scope, element) {
+    scope.$on('__column.resized__', function(event, column) {
+      scope.$parent.$parent.$emit('column.resized', column);
+    });
+    scope.$on('__column.sorted__', function(event, column) {
+      scope.$parent.$parent.$emit('column.sorted', column);
+    });
+    scope.$on('__column.moved__', function(event, columnPositions) {
+      scope.$parent.$parent.$emit('column.moved', columnPositions);
+    });
+
     var REFRESH_FRAME_RATE = 500;     // Throttle the bodyHeight update to .5 second
 
     // determine requestAnimationFrame compabitility
@@ -180,8 +190,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       scope.$watchCollection('searchTerms', scope.saveToStorage);
       //  - paging scheme
       scope.$watch('options.pagingScheme', scope.saveToStorage);
+    } else if (scope.options.externalStorageState !== undefined && scope.options.externalStorageState !== null) {
+      scope.processStateString(scope.options.externalStorageState);
     }
-
     // using requestAnimationFrame to watch for bodyHeight change to get better display response
     var bodyHeightSaved = undefined;
     var lastBodyHeightUpdated = Date.now();
