@@ -21,7 +21,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   'datatorrent.mlhrTable.directives.mlhrTableDummyRows'
 ])
 
-.directive('mlhrTable', ['$log', '$timeout', '$q', function ($log, $timeout, $q) {
+.directive('mlhrTable', ['$log', '$timeout', '$q', '$window', function ($log, $timeout, $q, $window) {
 
   function debounce(func, wait, immediate) {
     var timeout, args, context, timestamp, result;
@@ -75,6 +75,64 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   }
 
   function link(scope, element) {
+    function adjustColumnWidths(column) {
+      // exit if there are no columns
+      if (!scope.columns) {
+        return;
+      }
+
+      // exit if there is not selection column
+      var count = scope.columns.filter(function(col) { return col.id === 'selector' }).length;
+      if (count === 0) {
+        return;
+      }
+
+      var id = column && column.id ? column.id : undefined;
+
+      // It is possible for users to resize all columns in the table so that the selection column gets resized wider than
+      // it should be.
+      // The code below will expand the last or next to last column if necessary to prevent the selection column from growing.
+      // The column to be expanded cannot be the column being adjusted and the lockWidth property is not true.
+      var tableWidth = element.width();
+      var widths = 0;
+      scope.columns.forEach(function(col) {
+        if ((col.width + '').indexOf('%') > -1) {
+          widths += parseFloat(col.width) / 100 * tableWidth;
+        }  else {
+        widths += parseFloat(col.width);
+        }
+      });
+      if (widths < tableWidth) {
+        // get last column that is not the column being resized and the lockWidth is not true
+        for(var i = scope.columns.length - 1; i > 0; i--) {
+          if (scope.columns[i].id !== id && !scope.columns[i].lockWidth && scope.columns[i].id !== 'selector') {
+            // we can delete the width of this column
+            delete scope.columns[i].width;
+            break;
+          }
+        }
+      }
+    }
+
+    scope.$on('__column.resized__', function(event, column) {
+      adjustColumnWidths(column);
+      scope.$parent.$parent.$emit('column.resized', column);
+    });
+    scope.$on('__column.sorted__', function(event, column) {
+      scope.$parent.$parent.$emit('column.sorted', column);
+    });
+    scope.$on('__column.moved__', function(event, columnPositions) {
+      scope.$parent.$parent.$emit('column.moved', columnPositions);
+    });
+
+    // we also want to make sure the selection column doesn't expand when the browser resizes
+    $($window).on('resize', adjustColumnWidths);
+
+    // remove window resize event
+    scope.$on('$destroy', function() {
+      $($window).off('resize', adjustColumnWidths);
+    });
+
     var REFRESH_FRAME_RATE = 500;     // Throttle the bodyHeight update to .5 second
 
     // determine requestAnimationFrame compabitility
@@ -180,8 +238,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       scope.$watchCollection('searchTerms', scope.saveToStorage);
       //  - paging scheme
       scope.$watch('options.pagingScheme', scope.saveToStorage);
+    } else if (scope.options.userOverrides !== undefined && scope.options.userOverrides !== null) {
+      scope.processStateString(scope.options.userOverrides);
     }
-
     // using requestAnimationFrame to watch for bodyHeight change to get better display response
     var bodyHeightSaved = undefined;
     var lastBodyHeightUpdated = Date.now();

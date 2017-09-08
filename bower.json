@@ -1,6 +1,6 @@
 {
   "name": "malhar-angular-table",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "main": "./dist/mlhr-table.js",
   "dependencies": {
     "angular": "~1.3",

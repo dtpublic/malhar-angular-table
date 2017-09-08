@@ -97,13 +97,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
         return (scope.options.highlightRow ? scope.options.highlightRow(row) : false);
       };
 
-      scope.$watch('searchTerms', function() {
+      scope.$watch('searchTerms', function(newVal, oldVal) {
         if (scope.scrollDiv.scrollTop() !== 0) {
           // on filter change, scroll to top, let the scroll event update the view
           scope.scrollDiv.scrollTop(0);
         } else {
           // no scroll change, run updateHandler
           updateHandler();
+        }
+        if (!angular.equals(newVal, oldVal)) {
+          scope.$parent.$parent.$emit('searchTerms.changed', scope.searchTerms);
         }
       }, true);
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);

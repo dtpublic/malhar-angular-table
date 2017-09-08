@@ -116,6 +116,7 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     };
     // Toggles column sorting
     $scope.toggleSort = function ($event, column) {
+      var direction;
       // check if even sortable
       if (!column.sort) {
         return;
@@ -127,27 +128,38 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
         case '+':
           // Make descending
           $scope.sortDirection[column.id] = '-';
+          direction = '-';
           break;
         case '-':
           // Remove from sortOrder and direction
           $scope.removeSort(column.id);
+          $scope.$emit('__column.sorted__', { id: column.id });
           break;
         default:
           // Make ascending
           $scope.addSort(column.id, '+');
+          direction = '+';
           break;
         }
       } else {
         // shift is not down, disable other
         // columns but toggle two states
         var lastState = $scope.sortDirection[column.id];
+        var replace = true;
         $scope.clearSort();
         if (lastState === '+') {
           $scope.addSort(column.id, '-');
+          direction = '-';
         } else {
           $scope.addSort(column.id, '+');
+          direction = '+';
         }
       }
+      $scope.$emit('__column.sorted__', {
+        id: column.id,
+        direction: direction,
+        replace: replace
+      });
       $scope.saveToStorage();
     };
     // Retrieve className for given sorting state
@@ -255,6 +267,11 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
         } else {
           column.width = Math.max(new_width, 0);
         }
+        $scope.$emit('__column.resized__', {
+          id: column.id,
+          width: column.width
+        });
+        $scope.saveToStorage();
         $scope.$apply();
       });
     };
@@ -263,7 +280,12 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       handle: '.column-text',
       helper: 'clone',
       placeholder: 'mlhr-table-column-placeholder',
-      distance: 5
+      distance: 5,
+      stop: function (event, ui) {
+        $scope.$emit('__column.moved__', $scope.columns.map(function (col) {
+          return col.id;
+        }));
+      }
     };
     $scope.getActiveColCount = function () {
       var count = 0;
@@ -292,7 +314,8 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       state.columns = $scope.columns.map(function (col) {
         return {
           id: col.id,
-          disabled: !!col.disabled
+          disabled: !!col.disabled,
+          width: col.width
         };
       });
       // save non-transient options
@@ -307,20 +330,17 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       // Save to storage
       $scope.storage.setItem($scope.storageKey, JSON.stringify(state));
     };
-    $scope.loadFromStorage = function () {
-      if (!$scope.storage) {
-        return;
-      }
-      // Attempt to parse the storage
-      var stateString = $scope.storage.getItem($scope.storageKey);
-      // Was it there?
-      if (!stateString) {
-        return;
-      }
+    $scope.processStateString = function (stateString) {
       // Try to parse it
       var state;
       try {
-        state = JSON.parse(stateString);
+        // stateString might be the userOverrides object in the table options.
+        // Only parse if it is not an object.
+        if (angular.isObject(stateString)) {
+          state = stateString;
+        } else {
+          state = JSON.parse(stateString);
+        }
         // if mimatched storage hash, stop loading from storage
         if (state.options.storageHash !== $scope.options.storageHash) {
           return;
@@ -353,9 +373,15 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
           return column_ids.indexOf(a.id) - column_ids.indexOf(b.id);
         });
         $scope.columns.forEach(function (col, i) {
-          ['disabled'].forEach(function (prop) {
-            col[prop] = state.columns[i][prop];
-          });
+          col.disabled = state.columns[i].disabled;
+          if ((state.columns[i].width + '').indexOf('%')) {
+            col.width = state.columns[i].width;
+          } else {
+            var width = parseFloat(state.columns[i].width);
+            if (!isNaN(width)) {
+              col.width = width;
+            }
+          }
         });
         // load options
         [
@@ -368,6 +394,18 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       } catch (e) {
         $log.warn('Loading from storage failed!');
       }
+    };
+    $scope.loadFromStorage = function () {
+      if (!$scope.storage) {
+        return;
+      }
+      // Attempt to parse the storage
+      var stateString = $scope.storage.getItem($scope.storageKey);
+      // Was it there?
+      if (!stateString) {
+        return;
+      }
+      $scope.processStateString(stateString);
     };
     $scope.calculateRowLimit = function () {
       var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
@@ -400,7 +438,8 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   '$log',
   '$timeout',
   '$q',
-  function ($log, $timeout, $q) {
+  '$window',
+  function ($log, $timeout, $q, $window) {
     function debounce(func, wait, immediate) {
       var timeout, args, context, timestamp, result;
       var later = function () {
@@ -447,6 +486,59 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       return obj;
     }
     function link(scope, element) {
+      function adjustColumnWidths(column) {
+        // exit if there are no columns
+        if (!scope.columns) {
+          return;
+        }
+        // exit if there is not selection column
+        var count = scope.columns.filter(function (col) {
+            return col.id === 'selector';
+          }).length;
+        if (count === 0) {
+          return;
+        }
+        var id = column && column.id ? column.id : undefined;
+        // It is possible for users to resize all columns in the table so that the selection column gets resized wider than
+        // it should be.
+        // The code below will expand the last or next to last column if necessary to prevent the selection column from growing.
+        // The column to be expanded cannot be the column being adjusted and the lockWidth property is not true.
+        var tableWidth = element.width();
+        var widths = 0;
+        scope.columns.forEach(function (col) {
+          if ((col.width + '').indexOf('%') > -1) {
+            widths += parseFloat(col.width) / 100 * tableWidth;
+          } else {
+            widths += parseFloat(col.width);
+          }
+        });
+        if (widths < tableWidth) {
+          // get last column that is not the column being resized and the lockWidth is not true
+          for (var i = scope.columns.length - 1; i > 0; i--) {
+            if (scope.columns[i].id !== id && !scope.columns[i].lockWidth && scope.columns[i].id !== 'selector') {
+              // we can delete the width of this column
+              delete scope.columns[i].width;
+              break;
+            }
+          }
+        }
+      }
+      scope.$on('__column.resized__', function (event, column) {
+        adjustColumnWidths(column);
+        scope.$parent.$parent.$emit('column.resized', column);
+      });
+      scope.$on('__column.sorted__', function (event, column) {
+        scope.$parent.$parent.$emit('column.sorted', column);
+      });
+      scope.$on('__column.moved__', function (event, columnPositions) {
+        scope.$parent.$parent.$emit('column.moved', columnPositions);
+      });
+      // we also want to make sure the selection column doesn't expand when the browser resizes
+      $($window).on('resize', adjustColumnWidths);
+      // remove window resize event
+      scope.$on('$destroy', function () {
+        $($window).off('resize', adjustColumnWidths);
+      });
       var REFRESH_FRAME_RATE = 500;
       // Throttle the bodyHeight update to .5 second
       // determine requestAnimationFrame compabitility
@@ -533,6 +625,8 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         scope.$watchCollection('searchTerms', scope.saveToStorage);
         //  - paging scheme
         scope.$watch('options.pagingScheme', scope.saveToStorage);
+      } else if (scope.options.userOverrides !== undefined && scope.options.userOverrides !== null) {
+        scope.processStateString(scope.options.userOverrides);
       }
       // using requestAnimationFrame to watch for bodyHeight change to get better display response
       var bodyHeightSaved = undefined;
@@ -845,13 +939,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
       scope.highlightRowHandler = function (row) {
         return scope.options.highlightRow ? scope.options.highlightRow(row) : false;
       };
-      scope.$watch('searchTerms', function () {
+      scope.$watch('searchTerms', function (newVal, oldVal) {
         if (scope.scrollDiv.scrollTop() !== 0) {
           // on filter change, scroll to top, let the scroll event update the view
           scope.scrollDiv.scrollTop(0);
         } else {
           // no scroll change, run updateHandler
           updateHandler();
+        }
+        if (!angular.equals(newVal, oldVal)) {
+          scope.$parent.$parent.$emit('searchTerms.changed', scope.searchTerms);
         }
       }, true);
       scope.$watch('[filterState.filterCount,rowOffset,rowLimit]', updateHandler);
