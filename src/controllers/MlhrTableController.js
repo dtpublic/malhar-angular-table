@@ -365,7 +365,13 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     // Try to parse it
     var state;
     try {
-      state = JSON.parse(stateString);
+      // stateString might be the userOverrides object in the table options.
+      // Only parse if it is not an object.
+      if (angular.isObject(stateString)) {
+        state = stateString;
+      } else {
+        state = JSON.parse(stateString);
+      }
 
       // if mimatched storage hash, stop loading from storage
       if (state.options.storageHash !== $scope.options.storageHash) {
