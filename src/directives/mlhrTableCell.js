@@ -19,7 +19,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableCell', [
   'datatorrent.mlhrTable.directives.mlhrTableSelector'
 ])
 
-.directive('mlhrTableCell', function($compile) {
+.directive('mlhrTableCell', function($compile, $interpolate) {
 
   function link(scope, element) {
     var column = scope.column;
@@ -51,6 +51,14 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableCell', [
     }
     element.html(cellMarkup);
     $compile(element.contents())(scope);
+
+    scope.getPopoverTitle = function() {
+      return (column.popoverTitle ? scope.$eval($interpolate(column.popoverTitle)) : '');
+    }
+
+    scope.getPopoverText = function() {
+      return (!column.disablePopover && element[0].clientWidth < element[0].scrollWidth ? element.html() : '');
+    }
   }
 
   return {

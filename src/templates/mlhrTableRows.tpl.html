@@ -2,7 +2,17 @@
   ng-class="{highlight: highlightRowHandler(row)}"
   ng-attr-class="{{ (rowOffset + $index) % 2 ? 'odd' : 'even' }}">
 
-  <td ng-repeat="column in columns track by column.id" class="mlhr-table-cell" mlhr-table-cell>
+  <td ng-repeat="column in columns track by column.id"
+    class="mlhr-table-cell"
+    ng-class="{ 'column-selector': column.selector }"
+    mlhr-table-cell
+    uib-popover-html="getPopoverText()"
+    popover-class="{{ column.popoverClass || '' }}"
+    popover-title="{{ getPopoverTitle() }}"
+    popover-trigger="{{ column.popoverTrigger || 'mouseenter' }}"
+    popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"
+    popover-placement="{{column.popoverPlacement || 'top' }}"
+    popover-append-to-body="true">
   </td>
 
 </tr>

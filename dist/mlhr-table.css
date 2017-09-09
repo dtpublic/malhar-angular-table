@@ -159,6 +159,10 @@ when a discreet width has been set on it */
   display: block;
 }
 
+.mlhr-table th .column-selector {
+  display: block;
+}
+
 /* the element showing what the new width will be */
 
 .mlhr-table th .column-resizer-marquee {
