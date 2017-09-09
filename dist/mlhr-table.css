@@ -161,6 +161,7 @@ when a discreet width has been set on it */
 
 .mlhr-table th .column-selector {
   display: block;
+  overflow: visible;
 }
 
 /* the element showing what the new width will be */
