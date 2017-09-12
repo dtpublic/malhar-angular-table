@@ -7,7 +7,7 @@
     ng-class="{ 'column-selector': column.selector }"
     mlhr-table-cell
     uib-popover-html="getPopoverText()"
-    popover-class="{{ column.popoverClass || '' }}"
+    popover-class="{{ column.popoverClass || 'mlhr-table-cell-popover-text ' + column.popoverClass }}"
     popover-title="{{ getPopoverTitle() }}"
     popover-trigger="{{ column.popoverTrigger || 'mouseenter' }}"
     popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"

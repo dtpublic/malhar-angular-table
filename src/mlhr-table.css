@@ -169,3 +169,7 @@ when a discreet width has been set on it */
 table tbody .mlhr-table-dummy-row td {
   border-top: none;
 }
+
+.mlhr-table-cell-popover-text {
+  word-wrap: break-word;
+}
