@@ -1,0 +1,4 @@
+.mlhr-table-cell {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

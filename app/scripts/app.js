@@ -3,6 +3,7 @@
 angular.module('datatorrent.mlhrTable.ghPage', [
   'ngSanitize',
   'ngRoute',
+  'ui.bootstrap',
   'datatorrent.mlhrTable'
 ])
 .config(function ($routeProvider) {

@@ -18,7 +18,8 @@
 angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
   'datatorrent.mlhrTable.directives.mlhrTableCell',
   'datatorrent.mlhrTable.filters.mlhrTableRowFilter',
-  'datatorrent.mlhrTable.filters.mlhrTableRowSorter'
+  'datatorrent.mlhrTable.filters.mlhrTableRowSorter',
+  'ui.bootstrap'
 ])
 
 .directive('mlhrTableRows', function($filter) {

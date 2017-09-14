@@ -133,6 +133,11 @@ when a discreet width has been set on it */
   display: block;
 }
 
+.mlhr-table th .column-selector {
+  display: block;
+  overflow: visible;
+}
+
 /* the element showing what the new width will be */
 .mlhr-table th .column-resizer-marquee {
   left: 0;
@@ -163,4 +168,8 @@ when a discreet width has been set on it */
 }
 table tbody .mlhr-table-dummy-row td {
   border-top: none;
+}
+
+.mlhr-table-cell-popover-text {
+  word-wrap: break-word;
 }
