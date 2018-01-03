@@ -921,7 +921,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
         }
       };
       var updateSelection = function () {
-        if (scope.selected && scope.selected.length > 0) {
+        if (scope.selected && scope.selected.length > 0 && scope.options.__selectionColumn) {
           if (scope.options.__selectionColumn.selectObject) {
             // selected array contains entire row of data
             for (var i = 0; i < scope.selected.length; i++) {
