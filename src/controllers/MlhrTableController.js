@@ -373,15 +373,24 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
         state = JSON.parse(stateString);
       }
 
-      // if mimatched storage hash, stop loading from storage
+      // if mismatched storage hash, stop loading from storage
       if (state.options.storageHash !== $scope.options.storageHash) {
         return;
       }
 
-      // load state objects
-      ['sortOrder', 'sortDirection', 'searchTerms'].forEach(function(prop){
-        $scope[prop] = state[prop];
-      });
+      if ($scope.options.overrideSortOrder && $scope.options.overrideSortDirection) {
+        $scope.sortOrder = $scope.options.overrideSortOrder;
+        $scope.sortDirection = $scope.options.overrideSortDirection;
+      } else {
+        $scope.sortOrder = state.sortOrder;
+        $scope.sortDirection = state.sortDirection;
+      }
+
+      if ($scope.options.overrideSearchTerms) {
+        $scope.searchTerms = $scope.options.overrideSearchTerms;
+      } else {
+        $scope.searchTerms = state.searchTerms;
+      }
 
       // validate (compare ids)
 
@@ -445,9 +454,13 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
   };
 
   $scope.calculateRowLimit = function() {
-    var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
-    $scope.rowHeight = rowHeight || $scope.options.defaultRowHeight || 20;
-    $scope.rowLimit = Math.ceil($scope.options.bodyHeight / $scope.rowHeight) + $scope.options.rowPadding*2;
+    if ($scope.options.ignoreDummyRows) {
+      $scope.rowLimit = $scope.rows ? $scope.rows.length : 0;
+    } else {
+      var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
+      $scope.rowHeight = rowHeight || $scope.options.defaultRowHeight || 20;
+      $scope.rowLimit = Math.ceil($scope.options.bodyHeight / $scope.rowHeight) + $scope.options.rowPadding*2;
+    }
   };
 
 }]);

@@ -118,7 +118,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', [])
     return total;
     
   }
-  function date(term, value) {
+  function date(term, value, returnBoundary) {
     // today
     // yesterday
     // 1 day ago
@@ -143,24 +143,59 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', [])
     var lowerbound, upperbound;
     if ( first_char === '<' ) {
       lowerbound = now - parseDateFilter(other_chars);
-      return value > lowerbound;
+      if (returnBoundary) {
+        return {
+          min: lowerbound
+        };
+      } else {
+        return value > lowerbound;
+      }
     }
     if ( first_char === '>' ) {
       upperbound = now - parseDateFilter(other_chars);
-      return value < upperbound;
+      if (returnBoundary) {
+        return {
+          max: upperbound
+        };
+      } else {
+        return value < upperbound;
+      }
     }
     
     if ( term === 'today') {
-      return new Date(value).toDateString() === nowDate.toDateString();
+      if (returnBoundary) {
+        now = +(new Date(nowDate.toDateString()));
+        return {
+          min: now,
+          max: now + 86399999
+        };
+      } else {
+        return new Date(value).toDateString() === nowDate.toDateString();
+      }
     }
 
     if ( term === 'yesterday') {
-      return new Date(value).toDateString() === new Date(now - unitmap.d).toDateString();
+      if (returnBoundary) {
+        now = +(new Date(nowDate.toDateString()));
+        return {
+          min: now - 86400000,
+          max: now
+        };
+      } else {
+        return new Date(value).toDateString() === new Date(now - unitmap.d).toDateString();
+      }
     }
 
     var supposedDate = new Date(term);
     if (!isNaN(supposedDate)) {
-      return new Date(value).toDateString() === supposedDate.toDateString();
+      if (returnBoundary) {
+        return {
+          min: +supposedDate,
+          max: +supposedDate
+        };
+      } else {
+        return new Date(value).toDateString() === supposedDate.toDateString();
+      }
     }
 
     return false;
@@ -308,7 +343,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', [])
   duration.title = durationFormatted.title = 'Search by duration, e.g.:\n"<= 30 minutes",\n"= 1 hour",\n">= 1 day, 4 hours" or\n "> 2.5 days & < 3 days".\nDefault operator is "=" and unit is "second".\nThus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds".';
 
 
-  function stringToMemory(str) {
+  function stringToMemory(str, toUnit) {
 
     function getVal(str) {
       var units = {
@@ -329,7 +364,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', [])
       var ary = str.match(/^( *)(\d+\.?\d*|\d*\.?\d+)( *)(b|kb|mb|gb|tb|pb|eb|zb|yb|bb| *)( *$)/i);
       if (ary) {
         // the expression was a number and one of the units above
-        return ary[2] * units[ary[4].toLowerCase()];
+        return ary[2] * units[ary[4].toLowerCase()] / units[(toUnit || 'b').toLowerCase()];
       }
 
       // got here means the expression is not recognized

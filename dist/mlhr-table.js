@@ -341,18 +341,22 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
         } else {
           state = JSON.parse(stateString);
         }
-        // if mimatched storage hash, stop loading from storage
+        // if mismatched storage hash, stop loading from storage
         if (state.options.storageHash !== $scope.options.storageHash) {
           return;
         }
-        // load state objects
-        [
-          'sortOrder',
-          'sortDirection',
-          'searchTerms'
-        ].forEach(function (prop) {
-          $scope[prop] = state[prop];
-        });
+        if ($scope.options.overrideSortOrder && $scope.options.overrideSortDirection) {
+          $scope.sortOrder = $scope.options.overrideSortOrder;
+          $scope.sortDirection = $scope.options.overrideSortDirection;
+        } else {
+          $scope.sortOrder = state.sortOrder;
+          $scope.sortDirection = state.sortDirection;
+        }
+        if ($scope.options.overrideSearchTerms) {
+          $scope.searchTerms = $scope.options.overrideSearchTerms;
+        } else {
+          $scope.searchTerms = state.searchTerms;
+        }
         // validate (compare ids)
         // reorder columns and merge
         var column_ids = state.columns.map(function (col) {
@@ -408,9 +412,13 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
       $scope.processStateString(stateString);
     };
     $scope.calculateRowLimit = function () {
-      var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
-      $scope.rowHeight = rowHeight || $scope.options.defaultRowHeight || 20;
-      $scope.rowLimit = Math.ceil($scope.options.bodyHeight / $scope.rowHeight) + $scope.options.rowPadding * 2;
+      if ($scope.options.ignoreDummyRows) {
+        $scope.rowLimit = $scope.rows ? $scope.rows.length : 0;
+      } else {
+        var rowHeight = $scope.options.fixedRowHeight || $scope.scrollDiv.find('.mlhr-table-rendered-rows tr').height();
+        $scope.rowHeight = rowHeight || $scope.options.defaultRowHeight || 20;
+        $scope.rowLimit = Math.ceil($scope.options.bodyHeight / $scope.rowHeight) + $scope.options.rowPadding * 2;
+      }
     };
   }
 ]);
@@ -552,6 +560,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       // This happens even if the columns are on different pages.
       scope.options = scope.options || {};
       scope.options.tableId = scope.$id;
+      if (scope.options.setTableScope) {
+        scope.options.tableScope = scope;
+      }
       // Prevent following user input objects from being modified by making deep copies of originals
       scope.columns = angular.copy(scope._columns);
       // Look for built-in filter, sort, and format functions
@@ -637,7 +648,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         if (scope.rowOffset === savedRowOffset && scope.dummyScope) {
           scope.dummyScope.updateHeight();
         }
-        scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
+        if (!scope.options.ignoreTableHeightStyle) {
+          scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
+        }
         scope.saveToStorage();
       };
       var rafid1;
@@ -679,10 +692,14 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         if (rowHeight === 0 || scope.tableRows === undefined) {
           return false;
         }
-        // make sure we adjust rowOffset so that last row renders at bottom of div
-        scope.rowOffset = Math.max(0, Math.min(scope.filterState.filterCount - scope.rowLimit, Math.floor(scrollTop / rowHeight) - scope.options.rowPadding));
-        // move the table rows to a position according to the div scroll top
-        scope.tableRows.css('top', '-' + (scope.tableDummy.height() - rowHeight * scope.rowOffset) + 'px');
+        if (scope.options.ignoreDummyRows) {
+          scope.rowOffset = 0;
+        } else {
+          // make sure we adjust rowOffset so that last row renders at bottom of div
+          scope.rowOffset = Math.max(0, Math.min(scope.filterState.filterCount - scope.rowLimit, Math.floor(scrollTop / rowHeight) - scope.options.rowPadding));
+          // move the table rows to a position according to the div scroll top
+          scope.tableRows.css('top', '-' + (scope.tableDummy.height() - rowHeight * scope.rowOffset) + 'px');
+        }
         if (scrollDeferred) {
           scrollDeferred.resolve();
           scrollDeferred = null;
@@ -844,7 +861,7 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', []).direct
     link: function (scope, element, attrs) {
       scope.$parent.dummyScope = scope;
       scope.updateHeight = function () {
-        if (scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_rows) {
+        if (!scope.$parent.options.ignoreDummyRows && scope.$parent.tableRows && scope.$parent.filterState && scope.$parent.visible_rows) {
           scope.dummyRowHeight = (scope.$parent.filterState.filterCount - scope.$parent.visible_rows.length) * scope.rowHeight;
           var rowHeight = scope.$parent.tableRows.height() / scope.$parent.visible_rows.length;
           scope.$parent.tableRows.css('top', '-' + (scope.dummyRowHeight - rowHeight * scope.$parent.rowOffset) + 'px');
@@ -891,6 +908,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
     var tableRowSorter = $filter('mlhrTableRowSorter');
     var limitTo = $filter('limitTo');
     function calculateVisibleRows(scope) {
+      if (scope.passThroughFilter) {
+        return scope.rows;
+      }
       // store visible rows in this variable
       var visible_rows;
       // build cache key using search terms and sorting options
@@ -971,6 +991,8 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows', [
           // because row count is reducing, we should perform scrollHandler to see if we need to 
           // change scrolling or visible rows
           scope.scrollHandler();
+        } else if (scope.rows) {
+          scope.rowLimit = scope.rows.length;
         }
       }, true);
     }
@@ -1275,7 +1297,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
     }
     return total;
   }
-  function date(term, value) {
+  function date(term, value, returnBoundary) {
     // today
     // yesterday
     // 1 day ago
@@ -1299,21 +1321,52 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
     var lowerbound, upperbound;
     if (first_char === '<') {
       lowerbound = now - parseDateFilter(other_chars);
-      return value > lowerbound;
+      if (returnBoundary) {
+        return { min: lowerbound };
+      } else {
+        return value > lowerbound;
+      }
     }
     if (first_char === '>') {
       upperbound = now - parseDateFilter(other_chars);
-      return value < upperbound;
+      if (returnBoundary) {
+        return { max: upperbound };
+      } else {
+        return value < upperbound;
+      }
     }
     if (term === 'today') {
-      return new Date(value).toDateString() === nowDate.toDateString();
+      if (returnBoundary) {
+        now = +new Date(nowDate.toDateString());
+        return {
+          min: now,
+          max: now + 86399999
+        };
+      } else {
+        return new Date(value).toDateString() === nowDate.toDateString();
+      }
     }
     if (term === 'yesterday') {
-      return new Date(value).toDateString() === new Date(now - unitmap.d).toDateString();
+      if (returnBoundary) {
+        now = +new Date(nowDate.toDateString());
+        return {
+          min: now - 86400000,
+          max: now
+        };
+      } else {
+        return new Date(value).toDateString() === new Date(now - unitmap.d).toDateString();
+      }
     }
     var supposedDate = new Date(term);
     if (!isNaN(supposedDate)) {
-      return new Date(value).toDateString() === supposedDate.toDateString();
+      if (returnBoundary) {
+        return {
+          min: +supposedDate,
+          max: +supposedDate
+        };
+      } else {
+        return new Date(value).toDateString() === supposedDate.toDateString();
+      }
     }
     return false;
   }
@@ -1440,7 +1493,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
   }
   duration.placeholder = durationFormatted.placeholder = 'duration search';
   duration.title = durationFormatted.title = 'Search by duration, e.g.:\n"<= 30 minutes",\n"= 1 hour",\n">= 1 day, 4 hours" or\n "> 2.5 days & < 3 days".\nDefault operator is "=" and unit is "second".\nThus searching "60", "60 seconds", or "= 60" are equivalent to "= 60 seconds".';
-  function stringToMemory(str) {
+  function stringToMemory(str, toUnit) {
     function getVal(str) {
       var units = {
           bb: 1.2379400392853803e+27,
@@ -1460,7 +1513,7 @@ angular.module('datatorrent.mlhrTable.services.mlhrTableFilterFunctions', []).se
       var ary = str.match(/^( *)(\d+\.?\d*|\d*\.?\d+)( *)(b|kb|mb|gb|tb|pb|eb|zb|yb|bb| *)( *$)/i);
       if (ary) {
         // the expression was a number and one of the units above
-        return ary[2] * units[ary[4].toLowerCase()];
+        return ary[2] * units[ary[4].toLowerCase()] / units[(toUnit || 'b').toLowerCase()];
       }
       // got here means the expression is not recognized
       return NaN;
@@ -1645,6 +1698,6 @@ angular.module('src/templates/mlhrTableDummyRows.tpl.html', []).run([
 angular.module('src/templates/mlhrTableRows.tpl.html', []).run([
   '$templateCache',
   function ($templateCache) {
-    $templateCache.put('src/templates/mlhrTableRows.tpl.html', '<tr ng-repeat="row in visible_rows" \n' + '  ng-class="{highlight: highlightRowHandler(row)}"\n' + '  ng-attr-class="{{ (rowOffset + $index) % 2 ? \'odd\' : \'even\' }}">\n' + '\n' + '  <td ng-repeat="column in columns track by column.id"\n' + '    class="mlhr-table-cell"\n' + '    ng-class="{ \'column-selector\': column.selector }"\n' + '    mlhr-table-cell\n' + '    uib-popover-html="getPopoverText()"\n' + '    popover-class="{{ column.popoverClass || \'mlhr-table-cell-popover-text \' + column.popoverClass }}"\n' + '    popover-title="{{ getPopoverTitle() }}"\n' + '    popover-trigger="{{ column.popoverTrigger || \'mouseenter\' }}"\n' + '    popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"\n' + '    popover-placement="{{column.popoverPlacement || \'top\' }}"\n' + '    popover-append-to-body="true">\n' + '  </td>\n' + '\n' + '</tr>\n' + '');
+    $templateCache.put('src/templates/mlhrTableRows.tpl.html', '<tr ng-repeat="row in visible_rows" \n' + '  ng-class="{highlight: highlightRowHandler(row)}"\n' + '  ng-attr-class="{{ (rowOffset + $index) % 2 ? \'odd\' : \'even\' }}">\n' + '\n' + '  <td ng-repeat="column in columns track by column.id"\n' + '    class="mlhr-table-cell {{ column.cssClass }}"\n' + '    ng-class="{ \'column-selector\': column.selector }"\n' + '    mlhr-table-cell\n' + '    uib-popover-html="getPopoverText()"\n' + '    popover-class="{{ column.popoverClass || \'mlhr-table-cell-popover-text \' + column.popoverClass }}"\n' + '    popover-title="{{ getPopoverTitle() }}"\n' + '    popover-trigger="{{ column.popoverTrigger || \'mouseenter\' }}"\n' + '    popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"\n' + '    popover-placement="{{column.popoverPlacement || \'top\' }}"\n' + '    popover-append-to-body="true">\n' + '  </td>\n' + '\n' + '</tr>\n' + '');
   }
 ]);

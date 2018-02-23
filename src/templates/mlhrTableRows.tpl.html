@@ -3,7 +3,7 @@
   ng-attr-class="{{ (rowOffset + $index) % 2 ? 'odd' : 'even' }}">
 
   <td ng-repeat="column in columns track by column.id"
-    class="mlhr-table-cell"
+    class="mlhr-table-cell {{ column.cssClass }}"
     ng-class="{ 'column-selector': column.selector }"
     mlhr-table-cell
     uib-popover-html="getPopoverText()"

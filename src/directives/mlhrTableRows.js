@@ -29,6 +29,10 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
   var limitTo = $filter('limitTo');
 
   function calculateVisibleRows(scope) {
+    if (scope.passThroughFilter) {
+      return scope.rows;
+    }
+
     // store visible rows in this variable
     var visible_rows;
 
@@ -124,6 +128,8 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableRows',[
           // because row count is reducing, we should perform scrollHandler to see if we need to 
           // change scrolling or visible rows
           scope.scrollHandler();
+        } else if (scope.rows) {
+          scope.rowLimit = scope.rows.length;
         }
       }, true);
     }
