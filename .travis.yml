@@ -1,8 +1,8 @@
-os: osx
 language: node_js
 node_js:
   - '6.11.3'
 before_script:
+  - 'bower --version'
   - 'npm install -g bower@1.7.9 grunt-cli'
   - 'bower --version'
   - 'bower install'
