@@ -150,6 +150,10 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
     scope.options = scope.options || {};
     scope.options.tableId = scope.$id;
 
+    if (scope.options.setTableScope) {
+      scope.options.tableScope = scope;
+    }
+
     // Prevent following user input objects from being modified by making deep copies of originals
     scope.columns = angular.copy(scope._columns);
 
@@ -252,7 +256,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
       if (scope.rowOffset === savedRowOffset && scope.dummyScope) {
         scope.dummyScope.updateHeight();
       }
-      scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
+      if (!scope.options.ignoreTableHeightStyle) {
+        scope.scrollDiv.css(scope.options.fixedHeight ? 'height' : 'max-height', scope.options.bodyHeight + 'px');
+      }
       scope.saveToStorage();
     };
 
@@ -304,11 +310,15 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
         return false;
       }
 
-      // make sure we adjust rowOffset so that last row renders at bottom of div
-      scope.rowOffset = Math.max(0, Math.min(scope.filterState.filterCount - scope.rowLimit, Math.floor(scrollTop / rowHeight) - scope.options.rowPadding));
+      if (scope.options.ignoreDummyRows) {
+        scope.rowOffset = 0;
+      } else {
+        // make sure we adjust rowOffset so that last row renders at bottom of div
+        scope.rowOffset = Math.max(0, Math.min(scope.filterState.filterCount - scope.rowLimit, Math.floor(scrollTop / rowHeight) - scope.options.rowPadding));
 
-      // move the table rows to a position according to the div scroll top
-      scope.tableRows.css('top', '-' + (scope.tableDummy.height() - rowHeight * scope.rowOffset) + 'px');
+        // move the table rows to a position according to the div scroll top
+        scope.tableRows.css('top', '-' + (scope.tableDummy.height() - rowHeight * scope.rowOffset) + 'px');        
+      }
 
       if (scrollDeferred) {
         scrollDeferred.resolve();

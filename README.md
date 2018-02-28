@@ -60,29 +60,36 @@ Options Object
 --------------
 The options object should be available on the parent scope of the `<mlhr-table>` element. It is optional (defaults are used) and has the following keys:
 
-|        key         |    type   |   default   |                                                             description                                                              |
-| ------------------ | --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| rowPadding         | `number`  | 10          | Number of rows to add before and after the viewport                                                                                  |
-| sortClasses        | `Array`   | (see below) |                                                                                                                                      |
-| storage            | `Object`  | undefined   |                                                                                                                                      |
-| storageHash        | `String`  | undefined   | Non-sequential "version" hash used to identify and compare items in `storage`.                                                       |
-| storageKey         | `String`  | undefined   | Used as the key to store and retrieve items from `storage`, if it is specified.                                                      |
-| initialSorts       | `Array`   | []          | Array of objects defining an initial sort order. Each object must have `id` and `dir`, can be "+" for ascending, "-" for descending. |
-| loadingText        | `String`  | 'loading'   | String to show when data is loading                                                                                                  |
-| noRowsText         | `String`  | 'no rows'   | String to show when no rows are visible                                                                                              |
-| loadingTemplateUrl | `String`  | undefined   | Path to template for td when loading                                                                                                 |
-| loadingPromise     | `Object`  | undefined   | Promise object for table data loading.  Used to resolve loading state when data is available. | 
-| loadingErrorTemplateUrl  | `String`  | undefined   | Path to template for td when there is an error loading table data.                                                                              |
-| loadingErrorText   | `String`  | 'error loading results'   | String to show when loading fails                                                                                              |
-| noRowsTemplateUrl  | `String`  | undefined   | Path to template for td when there are no rows to show.                                                                              |
-| scrollDebounce     | `number`  | 100         | Wait time when debouncing the scroll event. Used when updating rows. Milliseconds.                                                   |
-| bgSizeMultiplier   | `number`  | 1           | The background-size css attribute of the placeholder rows is set to bgSizeMultiplier * rowHeight.                                    |
-| defaultRowHeight   | `number`  | 40          | When there are no rows to calculate the height, this number is used as the fallback                                                  |
-| bodyHeight         | `number`  | 300         | The pixel height for the body of the table. Note that unless `fixedHeight` is set to true, this will behave as a max-height.         |
-| fixedHeight        | `boolean` | false       | If true, the table body will always have a height of `bodyHeight`, regardless of whether the rows fill up the vertical space.        |
-| onRegisterApi      | `function` | {}         | Provides a access to select table controller methods, including selectAll, deselectAll, isSelectedAll, setLoading, etc.              | 
-| getter             | `function` | {}         | Customize the way to get column value. If not specified, get columen value by row[column.key]                                        | 
-| highlightRow       | `function` | undefined      | Determines whether or not to highlight a table row.   |
+|        key              |    type    |   default                 |                                                             description                                                              |
+| ----------------------- | ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| rowPadding              | `number`   | 10                        | Number of rows to add before and after the viewport                                                                                  |
+| sortClasses             | `Array`    | (see below)               |                                                                                                                                      |
+| storage                 | `Object`   | undefined                 |                                                                                                                                      |
+| storageHash             | `String`   | undefined                 | Non-sequential "version" hash used to identify and compare items in `storage`.                                                       |
+| storageKey              | `String`   | undefined                 | Used as the key to store and retrieve items from `storage`, if it is specified.                                                      |
+| initialSorts            | `Array`    | []                        | Array of objects defining an initial sort order. Each object must have `id` and `dir`, can be "+" for ascending, "-" for descending. |
+| loadingText             | `String`   | 'loading'                 | String to show when data is loading                                                                                                  |
+| noRowsText              | `String`   | 'no rows'                 | String to show when no rows are visible                                                                                              |
+| loadingTemplateUrl      | `String`   | undefined                 | Path to template for td when loading                                                                                                 |
+| loadingPromise          | `Object`   | undefined                 | Promise object for table data loading.  Used to resolve loading state when data is available.                                        |
+| loadingErrorTemplateUrl | `String`   | undefined                 | Path to template for td when there is an error loading table data.                                                                   |
+| loadingErrorText        | `String`   | 'error loading results'   | String to show when loading fails                                                                                                    |
+| noRowsTemplateUrl       | `String`   | undefined                 | Path to template for td when there are no rows to show.                                                                              |
+| scrollDebounce          | `number`   | 100                       | Wait time when debouncing the scroll event. Used when updating rows. Milliseconds.                                                   |
+| bgSizeMultiplier        | `number`   | 1                         | The background-size css attribute of the `placeholder` rows is set to bgSizeMultiplier * rowHeight.                                  |
+| defaultRowHeight        | `number`   | 40                        | When there are no rows to calculate the height, this number is used as the fallback                                                  |
+| bodyHeight              | `number`   | 300                       | The pixel height for the body of the table. Note that unless `fixedHeight` is set to true, this will behave as a max-height.         |
+| fixedHeight             | `boolean`  | false                     | If true, the table body will always have a height of `bodyHeight`, regardless of whether the rows fill up the vertical space.        |
+| onRegisterApi           | `function` | {}                        | Provides a access to select table controller methods, including selectAll, deselectAll, isSelectedAll, setLoading, etc.              | 
+| getter                  | `function` | {}                        | Customize the way to get column value. If not specified, get columen value by row[column.key]                                        | 
+| highlightRow            | `function` | undefined                 | Determines whether or not to highlight a table row.                                                                                  |
+| overrideSortOrder       | `Array`    | undefined                 | Array of field names to use as the sort order.  This property overrides the sortOrder property stored in storage.                            |
+| overrideSortDirection   | `Object`   | undefined                 | An object of key/value pairs where the key is the field name and the value is a `+` or `-`.  `+` is ascending and `-` is descending.  This property overrides the sortDirection property stored in storage. |
+| overrideSearchTerms     | `Object`   | undefined                 | An object of key/value pairs where the key is the field name and the value is the filter expression for that field.  This property overrides the searchTerms property stored in storage. |
+| ignoreDummyRows         | `boolean`  | false                     | If set to true, the dummy rows above and below the actual content table are not created.  Dummy rows are paddings above and below the content table.  When present, the scrollbar size is more accurate which allows users to drag it directly to the top or bottom of the table.  It's also a quick way to render the visible content only.  When set to true, then all rows in the data source are render in the table.  If there is a significant amount of data to render, then the rendering may be slow down the browser.  The ignoreTableHeightStyle property may need to be set to `true` if this property is set to `true` in order for the full table to be rendered correctly. |
+| setTableScope           | `boolean`  | false                     | If set to true, the table scope is assigned to the options object under the property named `tableScope`.                             |
+| ignoreTableHeightStyle  | `boolean`  | false                     | If set to true, the table height/max-height style is not set.  This property should be set to `true` if the ignoreDummyRows property is also set to `true`. |
+| passThroughFilter       | `boolean`  | false                     | If set to true, the column filters (searchTerms) will not actually run.  This property should be set to `true` if the REST API support filtering.  You can still take advantage of the filter input field and tooltip, but send the filter expressions as part of the REST API requests. |
 
 ### Loading
 A common requirement for tables showing dynamically loaded data is to show loading feedback. There are several options pertaining to this: `loading`, `loadingText`, and `loadingTemplateUrl`.  To disable loading text, a promise object from data loading can be provided, so that `setLoading(false)` can be attached to `promise.then()`.  Optionally, `onRegisterApi` function can be specified, which provides direct access to `setLoading` and other table controller methods.  This function specifies a single argument, which is the api object provided by the table.  Example: `onRegisterApi: function(api) { $scope.tableAPI = api; }`.
@@ -117,12 +124,12 @@ The columns should be an array of Column Definition Objects. The order in which 
 | filter       | `function` or `string` | no       | undefined     | If specified, defines row filter function this column uses. See *Row Filtering* below. |
 | format       | `function` or `string` | no       | ''            | If specified, defines cell format function. See the *Cell Formatting* section below.   |
 | width        | `string` or `number`   | no       | 'auto'        | width of column, can include units, e.g. '30px'                                        |
-| lockWidth   | `boolean`              | no       | false         | If true, column will not be resizable.                                                 |
+| lockWidth    | `boolean`              | no       | false         | If true, column will not be resizable.                                                 |
 | ngFilter     | `string`               | no       | undefined     | Name of a registered filter to use on row[column.key]                                  |
 | template     | `string`               | no       | undefined     | A string template for the cell contents                                                |
 | templateUrl  | `string`               | no       | undefined     | A template url used with ng-include for cell contents                                  |
 | title        | `string`               | no       | undefined     | A tooltip for a column header.                                                         |
-
+| cssClass     | `string`               | no       | undefined     | A CSS class name to be applied to this column.                                          |
 
 Row Sorting
 -----------
