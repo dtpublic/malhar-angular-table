@@ -3,6 +3,7 @@ node_js:
   - '6.11.3'
 before_script:
   - 'bower --version'
+  - 'sudo apt-get update'
   - 'npm install -g grunt-cli'
   - 'npm update bower'
   - 'bower --version'
