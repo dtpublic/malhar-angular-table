@@ -129,7 +129,7 @@ The columns should be an array of Column Definition Objects. The order in which 
 | template     | `string`               | no       | undefined     | A string template for the cell contents                                                |
 | templateUrl  | `string`               | no       | undefined     | A template url used with ng-include for cell contents                                  |
 | title        | `string`               | no       | undefined     | A tooltip for a column header.                                                         |
-| cssClass     | `string`               | no       | undefined     | A CSS classname to be applied to this column.                                          |
+| cssClass     | `string`               | no       | undefined     | A CSS class name to be applied to this column.                                          |
 
 Row Sorting
 -----------
