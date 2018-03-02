@@ -15,11 +15,9 @@
 */
 'use strict';
 
-angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', [
-  'datatorrent.mlhrTable.directives.mlhrTableSelector'
-])
+angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', [])
 
-.directive('mlhrTableHeaderLabel', function($compile, $interpolate) {
+.directive('mlhrTableHeaderLabel', function() {
   return {
     scope: true,
     link: function(scope, element) {

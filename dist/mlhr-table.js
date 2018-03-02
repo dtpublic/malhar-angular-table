@@ -897,20 +897,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableDummyRows', []).direct
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', ['datatorrent.mlhrTable.directives.mlhrTableSelector']).directive('mlhrTableHeaderLabel', [
-  '$compile',
-  '$interpolate',
-  function ($compile, $interpolate) {
-    return {
-      scope: true,
-      link: function (scope, element) {
-        scope.getPopoverText = function (labelText) {
-          return element[0].offsetWidth < element[0].scrollWidth ? labelText : '';
-        };
-      }
-    };
-  }
-]);
+angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', []).directive('mlhrTableHeaderLabel', function () {
+  return {
+    scope: true,
+    link: function (scope, element) {
+      scope.getPopoverText = function (labelText) {
+        return element[0].offsetWidth < element[0].scrollWidth ? labelText : '';
+      };
+    }
+  };
+});
 // Source: dist/directives/mlhrTableRows.js
 /*
 * Copyright (c) 2013 DataTorrent, Inc. ALL Rights Reserved.
