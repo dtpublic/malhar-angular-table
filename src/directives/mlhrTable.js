@@ -18,6 +18,7 @@
 angular.module('datatorrent.mlhrTable.directives.mlhrTable', [
   'datatorrent.mlhrTable.controllers.MlhrTableController',
   'datatorrent.mlhrTable.directives.mlhrTableRows',
+  'datatorrent.mlhrTable.directives.mlhrTableHeaderLabel',
   'datatorrent.mlhrTable.directives.mlhrTableDummyRows'
 ])
 
