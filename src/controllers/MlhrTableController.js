@@ -98,12 +98,6 @@ angular.module('datatorrent.mlhrTable.controllers.MlhrTableController', [
     $scope.sortOrder = [];
     $scope.sortDirection = {};
   };
-
-  $scope.getHeaderLabel = function(originalLabel) {
-    // debugger;
-    return originalLabel;
-  };
-
   // Checks if columns have any filter fileds
   $scope.hasFilterFields = function() {
     for (var i = $scope.columns.length - 1; i >= 0; i--) {

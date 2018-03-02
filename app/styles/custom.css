@@ -4,5 +4,5 @@
 }
 
 .mlhr-table-header-label {
-  text-overflow: ellipsis !important;
+  text-overflow: ellipsis;
 }
