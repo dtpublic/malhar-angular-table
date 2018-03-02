@@ -2,3 +2,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.mlhr-table-header-label {
+  text-overflow: ellipsis;
+}
