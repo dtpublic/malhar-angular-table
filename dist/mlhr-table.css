@@ -193,6 +193,17 @@ when a discreet width has been set on it */
   user-select: none;
 }
 
+/* display an ellipsis when text is overflow */
+
+.mlhr-table-cell {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mlhr-table-header-label {
+  text-overflow: ellipsis;
+}
+
 /* dummy row */
 
 .mlhr-table-dummy-row {
