@@ -210,12 +210,6 @@ describe('Directive: mlhrTable', function () {
       expect(actual).to.equal(columns[0].label);
     });
 
-    it('should attach a title (tooltip) to <th>s where title was specified in column definition', function() {
-      var actual = element.find('table:eq(0) th:eq(2)').attr('title');
-      var expected = columns[2].title;
-      expect(actual).to.equal(expected);
-    });
-
   });
 
   describe('column filter', function() {
