@@ -21,8 +21,21 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', [])
   return {
     scope: true,
     link: function(scope, element) {
-      scope.getPopoverText = function(labelText) {
-        return (element[0].offsetWidth < element[0].scrollWidth ? labelText : '');
+      scope.getPopoverText = function(label, description) {
+        var t = '';
+        if (element[0].offsetWidth < element[0].scrollWidth) { //label is truncated
+          t = label;
+          if (description) {
+            t += ', ' + description;
+          }
+        }
+        else {
+          if (description) {
+            t = description;
+          }
+        }
+        // return (element[0].offsetWidth < element[0].scrollWidth ? label : '');
+        return t;
       }
     }
   };
