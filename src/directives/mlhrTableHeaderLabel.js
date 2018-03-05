@@ -24,9 +24,9 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', [])
       scope.getPopoverText = function(label, description) {
         var t = '';
         if (element[0].offsetWidth < element[0].scrollWidth) { //label is truncated
-          t = label;
+          t = '<b>' + label + '</b>';
           if (description) {
-            t += ', ' + description;
+            t += '<br>' + description;
           }
         }
         else {
@@ -34,7 +34,6 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', [])
             t = description;
           }
         }
-        // return (element[0].offsetWidth < element[0].scrollWidth ? label : '');
         return t;
       }
     }
