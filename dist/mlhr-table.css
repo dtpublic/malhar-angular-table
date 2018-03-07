@@ -204,6 +204,10 @@ when a discreet width has been set on it */
   text-overflow: ellipsis;
 }
 
+.popover-content {
+  overflow-wrap: break-word;
+}
+
 /* dummy row */
 
 .mlhr-table-dummy-row {
