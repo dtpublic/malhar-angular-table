@@ -824,6 +824,15 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableCell', ['datatorrent.m
       scope.getPopoverText = function () {
         return !column.disablePopover && element[0].clientWidth < element[0].scrollWidth ? element.html() : '';
       };
+      scope.getPopoverPlacement = function (columnPosition) {
+        //columnPosition ranages from 0 to 1
+        var placement = 'top';
+        if (columnPosition < 0.33)
+          placement = 'top-left';
+        else if (columnPosition > 0.67)
+          placement = 'top-right';
+        return placement;
+      };
     }
     return {
       scope: true,
@@ -1746,6 +1755,6 @@ angular.module('src/templates/mlhrTableDummyRows.tpl.html', []).run([
 angular.module('src/templates/mlhrTableRows.tpl.html', []).run([
   '$templateCache',
   function ($templateCache) {
-    $templateCache.put('src/templates/mlhrTableRows.tpl.html', '<tr ng-repeat="row in visible_rows" \n' + '  ng-class="{highlight: highlightRowHandler(row)}"\n' + '  ng-attr-class="{{ (rowOffset + $index) % 2 ? \'odd\' : \'even\' }}">\n' + '\n' + '  <td ng-repeat="column in columns track by column.id"\n' + '    class="mlhr-table-cell {{ column.cssClass }}"\n' + '    ng-class="{ \'column-selector\': column.selector }"\n' + '    mlhr-table-cell\n' + '    uib-popover-html="getPopoverText()"\n' + '    popover-class="{{ column.popoverClass || \'mlhr-table-cell-popover-text \' + column.popoverClass }}"\n' + '    popover-title="{{ getPopoverTitle() }}"\n' + '    popover-trigger="{{ column.popoverTrigger || \'mouseenter\' }}"\n' + '    popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"\n' + '    popover-placement="{{column.popoverPlacement || \'top\' }}"\n' + '    popover-append-to-body="true">\n' + '  </td>\n' + '\n' + '</tr>\n' + '');
+    $templateCache.put('src/templates/mlhrTableRows.tpl.html', '<tr ng-repeat="row in visible_rows" \n' + '  ng-class="{highlight: highlightRowHandler(row)}"\n' + '  ng-attr-class="{{ (rowOffset + $index) % 2 ? \'odd\' : \'even\' }}">\n' + '\n' + '  <td ng-repeat="column in columns track by column.id"\n' + '    class="mlhr-table-cell {{ column.cssClass }}"\n' + '    ng-class="{ \'column-selector\': column.selector }"\n' + '    mlhr-table-cell\n' + '    uib-popover-html="getPopoverText()"\n' + '    popover-class="{{ column.popoverClass || \'mlhr-table-cell-popover-text \' + column.popoverClass }}"\n' + '    popover-title="{{ getPopoverTitle() }}"\n' + '    popover-trigger="{{ column.popoverTrigger || \'mouseenter\' }}"\n' + '    popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"\n' + '    popover-placement=\'{{column.popoverPlacement || getPopoverPlacement($index/(columns.length-1))}}\'\n' + '    popover-append-to-body="true">\n' + '  </td>\n' + '\n' + '</tr>\n' + '');
   }
 ]);

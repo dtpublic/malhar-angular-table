@@ -11,7 +11,7 @@
     popover-title="{{ getPopoverTitle() }}"
     popover-trigger="{{ column.popoverTrigger || 'mouseenter' }}"
     popover-popup-delay="{{ column.popoverPopupDelay || 1000 }}"
-    popover-placement="{{column.popoverPlacement || 'top' }}"
+    popover-placement='{{column.popoverPlacement || getPopoverPlacement($index/(columns.length-1))}}'
     popover-append-to-body="true">
   </td>
 

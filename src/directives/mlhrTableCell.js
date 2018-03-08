@@ -59,6 +59,15 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableCell', [
     scope.getPopoverText = function() {
       return (!column.disablePopover && element[0].clientWidth < element[0].scrollWidth ? element.html() : '');
     }
+
+    scope.getPopoverPlacement = function(columnPosition) { //columnPosition ranages from 0 to 1
+      var placement = 'top';
+      if (columnPosition < 0.33)
+        placement = 'top-left';
+      else if (columnPosition > 0.67) 
+        placement = 'top-right';
+      return placement;
+    }
   }
 
   return {
