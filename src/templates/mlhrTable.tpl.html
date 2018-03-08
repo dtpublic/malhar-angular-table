@@ -16,6 +16,7 @@
               mlhr-table-header-label
               uib-popover-html="getPopoverText((column.hasOwnProperty('label') ? column.label : column.id), column.title)"
               popover-trigger="{{ 'mouseenter' }}"
+              popover-placement='{{getPopoverPlacement($index/(columns.length-1))}}'
               popover-append-to-body="true">
               <input ng-if="column.selector" type="checkbox" ng-checked="isSelectedAll()" ng-click="toggleSelectAll($event)" />
               {{column.hasOwnProperty('label') ? column.label : column.id }}

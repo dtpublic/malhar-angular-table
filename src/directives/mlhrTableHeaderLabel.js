@@ -36,6 +36,16 @@ angular.module('datatorrent.mlhrTable.directives.mlhrTableHeaderLabel', [])
         }
         return t;
       }
+
+      scope.getPopoverPlacement = function(columnPosition) { //columnPosition ranages from 0 to 1
+        var placement = 'top';
+        if (columnPosition < 0.33)
+          placement = 'top-left';
+        else if (columnPosition > 0.67) 
+          placement = 'top-right';
+        return placement;
+      }
+
     }
   };
 });
