@@ -1,9 +1,8 @@
 {
   "name": "malhar-angular-table",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "license": "Apache License, v2.0",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "bower": "^1.8.2",
     "chai": "^1.9.1",
