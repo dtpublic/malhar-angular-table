@@ -161,6 +161,20 @@ when a discreet width has been set on it */
   user-select: none
 }
 
+/* display an ellipsis when text is overflow */
+.mlhr-table-cell {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mlhr-table-header-label {
+  text-overflow: ellipsis;
+}
+
+.popover-content {
+  overflow-wrap: break-word;
+}
+
 /* dummy row */
 .mlhr-table-dummy-row {
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAlCAYAAACDKIOpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABtJREFUeNpiuHv37n+G////MzAxAMHQIQACDAC7twbaN2nkgwAAAABJRU5ErkJggg==');
